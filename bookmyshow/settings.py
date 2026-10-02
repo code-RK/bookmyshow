@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 import os
 
@@ -42,7 +43,40 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third party
+    'rest_framework',
+    # Local
+    'accounts',
 ]
+
+# Custom user table - see accounts/models/tbl_users.py. This must be set before
+# the project's first migration is applied; changing it later requires a
+# database reset (see README).
+AUTH_USER_MODEL = 'accounts.Tbl_Users'
+
+
+# Django REST Framework
+# https://www.django-rest-framework.org/api-guide/settings/
+#
+# Authenticate with a JWT and require authentication by default, so a new
+# endpoint is protected unless it explicitly opts out. The public auth
+# endpoints set ``permission_classes = (AllowAny,)``.
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+# SimpleJWT
+# https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html
+# Defaults are a 5 minute access token and a 1 day refresh token.
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

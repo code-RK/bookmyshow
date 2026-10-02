@@ -28,6 +28,15 @@ bookmyshow/                # repository root
 │   ├── urls.py
 │   ├── asgi.py
 │   └── wsgi.py
+├── accounts/              # auth app (register / login)
+│   ├── models/            # package, not models.py
+│   │   ├── __init__.py    # re-exports Tbl_Users so Django registers it
+│   │   └── tbl_users.py   # Tbl_Users - the AUTH_USER_MODEL (table Tbl_Users)
+│   ├── serializers.py     # RegisterSerializer / LoginSerializer
+│   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   └── migrations/
 ├── docs/                  # db-architecture.md, api-contract.md
 └── venv/                  # local virtualenv (git-ignored)
 ```
@@ -71,9 +80,52 @@ bookmyshow/                # repository root
    python manage.py runserver
    ```
 
+## Authentication
+
+JWT auth via SimpleJWT. DRF is configured with `JWTAuthentication` and
+`IsAuthenticated` as the **project defaults**, so any new endpoint is protected
+unless it explicitly opts out with `permission_classes = (AllowAny,)`.
+
+| Method | Path | Auth | Request body | Success |
+| --- | --- | --- | --- | --- |
+| POST | `/api/v1/auth/register` | public | `{"username", "password"}` (`email` optional) | `201 {"message": "user created successfully"}` |
+| POST | `/api/v1/auth/login` | public | `{"username", "password"}` | `200 {"access", "refresh"}` |
+
+Both paths have no trailing slash, matching `docs/api-contract.md` exactly
+(a trailing slash would make Django's `APPEND_SLASH` turn the POST into a 301).
+
+Register a user and use the access token on protected endpoints:
+
+```powershell
+Invoke-RestMethod -Method POST -Uri http://localhost:8000/api/v1/auth/register `
+    -ContentType 'application/json' `
+    -Body '{"username":"test","password":"pass@123"}'
+
+$token = (Invoke-RestMethod -Method POST -Uri http://localhost:8000/api/v1/auth/login `
+    -ContentType 'application/json' `
+    -Body '{"username":"test","password":"pass@123"}').access
+
+# A protected endpoint (once implemented) takes the bearer token:
+Invoke-RestMethod -Uri http://localhost:8000/api/v1/shows/1 `
+    -Headers @{ Authorization = "Bearer $token" }
+```
+
+- Access tokens last **30 minutes**, refresh tokens **1 day** (`SIMPLE_JWT` in
+  `settings.py`); SimpleJWT's own defaults are 5 minutes / 1 day.
+- Passwords are hashed by `create_user()` and validated against Django's
+  `AUTH_PASSWORD_VALIDATORS` during registration.
+- Duplicate `username` → `400`; wrong credentials → `401`.
+- Registration and login run against the project's own user model,
+  `accounts.models.Tbl_Users` (table `Tbl_Users`), declared as
+  `AUTH_USER_MODEL` in `settings.py`. It subclasses `AbstractUser` and adds the
+  `role` column described in `docs/db-architecture.md`.
+- `role` defaults to `customer` and is **not** writable through the register
+  endpoint — otherwise anyone could register themselves as an admin. Promote a
+  user to `admin` from `/admin/` (`accounts/models/tbl_users.py`).
+
 ## Docker setup
 
-Runs the Django service and a MySQL 8.4 database (Django 6.0 requires MySQL
+Runs the Django service and a MySQL 8.0 database (Django 6.0 requires MySQL
 >= 8.0.11) with a single command. Credentials come from the same `.env` file
 used by local runs, so there is one source of truth.
 
@@ -132,6 +184,13 @@ $env:DB_NAME = "bookmyshow_dev"; docker compose up --build
 - **MySQL driver.** Django's MySQL backend imports `MySQLdb`. We use PyMySQL, a
   pure-Python drop-in replacement, registered in `bookmyshow/__init__.py` — so
   no C compiler or `libmysqlclient` is required at deploy time.
+- **Custom user model.** `AUTH_USER_MODEL = 'accounts.Tbl_Users'` must be set
+  *before* the project's first migration. Once migrations exist, changing it
+  makes Django refuse to touch an existing database with
+  `InconsistentMigrationHistory: Migration admin.0001_initial is applied before
+  its dependency accounts.0001_initial`. Reset the database instead: drop and
+  recreate it locally, or run `docker compose down -v` for the container, then
+  `migrate`.
 - **Troubleshooting.** `manage.py check`, `migrate` and `runserver` all open a
   MySQL connection. `OperationalError: (1045, "Access denied ...")` means the
   `DB_*` values above do not match your MySQL server.
