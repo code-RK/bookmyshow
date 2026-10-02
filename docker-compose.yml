@@ -1,0 +1,71 @@
+# Docker Compose stack for the bookmyshow Django service.
+#
+#   docker compose up --build     # start db + web
+#   docker compose logs -f web    # follow application logs
+#   docker compose down           # stop (keeps the mysql_data volume)
+#   docker compose down -v        # stop and wipe the database
+#
+# Credentials come from the .env file in this directory - the same file that
+# bookmyshow/settings.py loads through python-dotenv - so Docker and a local
+# `python manage.py runserver` share one source of truth.
+
+services:
+  db:
+    # Django 6.0 requires MySQL >= 8.0.11 (see django/db/backends/mysql/features.py),
+    # so 8.0 LTS is used here. `mysql:8.0` would work too.
+    image: mysql:8.0
+    container_name: bookmyshow-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      # The app connects from the `web` container rather than from localhost,
+      # and this image only creates 'root'@'localhost' unless told otherwise -
+      # without this, `web` fails with
+      # "Access denied for user 'root'@'172.x.x.x'".
+      # Only takes effect when the mysql_data volume is first initialised, so
+      # run `docker compose down -v` if you add it after a first boot.
+      MYSQL_ROOT_HOST: "%"
+    # The host machine already runs MySQL on 3306, so the port is deliberately
+    # not published. Uncomment the block below to reach the DB from the host.
+    # ports:
+    #   - "13306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping --host=127.0.0.1 --user=root --password=\"$$MYSQL_ROOT_PASSWORD\" --silent",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bookmyshow-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # DB_HOST/DB_PORT are forced to the Compose service name and internal
+      # port; the rest is reused from .env.
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "8000:8000"
+    # For live reload during development, uncomment this bind mount and run
+    # `docker compose up` - runserver's autoreloader then picks up edits.
+    # volumes:
+    #   - .:/app
+
+volumes:
+  mysql_data:

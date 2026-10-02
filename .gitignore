@@ -21,6 +21,8 @@ media/
 .env
 .env.*
 *.env
+# ...but keep the committed template so new checkouts know what to provide
+!.env.example
 
 # Tooling / editors
 .idea/

@@ -1,0 +1,32 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Local virtualenv - dependencies are installed inside the image instead
+venv/
+.venv/
+env/
+
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets - never bake .env into the image. Compose injects these at runtime.
+.env
+.env.*
+!.env.example
+
+# Not needed inside the runtime image
+docs/
+.idea/
+.vscode/
+Dockerfile
+.dockerignore
+docker-compose.yml
+README.md

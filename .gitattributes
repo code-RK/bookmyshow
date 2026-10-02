@@ -1,0 +1,9 @@
+# Shell scripts must keep LF line endings, otherwise the Linux container
+# fails to execute them ("/bin/sh^M: bad interpreter") after a Windows
+# checkout with core.autocrlf=true.
+*.sh text eol=lf
+
+# Keep the SQL / YAML / Python plumbing normalised too
+*.sql text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
