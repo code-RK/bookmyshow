@@ -31,9 +31,22 @@ bookmyshow/                # repository root
 ├── accounts/              # auth app (register / login)
 │   ├── models/            # package, not models.py
 │   │   ├── __init__.py    # re-exports Tbl_Users so Django registers it
-│   │   └── tbl_users.py   # Tbl_Users - the AUTH_USER_MODEL (table Tbl_Users)
+│   │   └── Tbl_Users.py   # Tbl_Users - the AUTH_USER_MODEL (table tbl_users)
 │   ├── serializers.py     # RegisterSerializer / LoginSerializer
+│   ├── permissions.py     # IsAdminRole - gates the admin-only endpoints
 │   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   └── migrations/
+├── show/                  # shows app
+│   ├── models/            # package, not models.py
+│   │   ├── __init__.py    # star-imports the four tables so Django registers them
+│   │   ├── Tbl_Show.py        # name, price_paise, per_user_limit -> tbl_show
+│   │   ├── Tbl_Seat.py        # seat_number, status -> tbl_seat
+│   │   ├── Tbl_Reservation.py # -> tbl_reservation (booking flow, not live yet)
+│   │   └── Tbl_Reservation_Seat.py # -> tbl_reservation_seat
+│   ├── serializers.py     # ShowCreateSerializer / ShowSerializer
+│   ├── views.py           # ShowCreateView (admin) / ShowDetailView
 │   ├── urls.py
 │   ├── admin.py
 │   └── migrations/
@@ -105,7 +118,7 @@ $token = (Invoke-RestMethod -Method POST -Uri http://localhost:8000/api/v1/auth/
     -ContentType 'application/json' `
     -Body '{"username":"test","password":"pass@123"}').access
 
-# A protected endpoint (once implemented) takes the bearer token:
+# Protected endpoints take the bearer token:
 Invoke-RestMethod -Uri http://localhost:8000/api/v1/shows/1 `
     -Headers @{ Authorization = "Bearer $token" }
 ```
@@ -116,12 +129,55 @@ Invoke-RestMethod -Uri http://localhost:8000/api/v1/shows/1 `
   `AUTH_PASSWORD_VALIDATORS` during registration.
 - Duplicate `username` → `400`; wrong credentials → `401`.
 - Registration and login run against the project's own user model,
-  `accounts.models.Tbl_Users` (table `Tbl_Users`), declared as
+  `accounts.models.Tbl_Users` (table `tbl_users`), declared as
   `AUTH_USER_MODEL` in `settings.py`. It subclasses `AbstractUser` and adds the
   `role` column described in `docs/db-architecture.md`.
 - `role` defaults to `customer` and is **not** writable through the register
   endpoint — otherwise anyone could register themselves as an admin. Promote a
-  user to `admin` from `/admin/` (`accounts/models/tbl_users.py`).
+  user to `admin` from `/admin/` (`accounts/models/Tbl_Users.py`).
+
+## Show endpoints
+
+| Method | Path | Auth | Request body | Success |
+| --- | --- | --- | --- | --- |
+| POST | `/api/v1/shows` | **admin role** (`role == admin`) | `{"name", "seats": ["A1", "A2"], "price_paise"}` | `201` show (same shape as GET) |
+| GET | `/api/v1/shows/{show_id}` | any authenticated user | — | `200 {"id", "name", "price_paise", "per_user_limit", "total_seats", "counts", "seats"}` |
+| POST | `/api/v1/shows/{show_id}/reserve` | any authenticated user | `{"seats": ["A1"]}` + idempotency key (`Idempotency-Key` header or `idempotency_key` field) | `201 {"reservation_id", "show_id", "user_id", "seats", "amount_paise", "status"}` |
+| GET | `/api/v1/reservations/{reservation_id}` | owner only | — | `200` reservation |
+| POST | `/api/v1/reservations/{reservation_id}/cancel` | owner only | — | `200` cancelled reservation |
+
+All require `Authorization: Bearer <access token>`; that is the only auth
+mechanism, because `SessionAuthentication` is not configured. Failures follow
+`docs/api-contract.md`: missing or invalid token → `401`, authenticated
+non-admin POST → `403`, unknown show (or someone else's reservation) → `404`,
+malformed body → `400`, seat taken / per-user limit / reused idempotency
+key → `409`.
+
+`counts` holds `available`, `held` and `confirmed`, and always sums to
+`total_seats`. `held` is always `0`: reservations confirm their seats
+immediately and are released by cancelling. Reservations are
+all-or-nothing: if any requested seat is taken, nothing is booked.
+
+`POST /api/v1/shows` writes the show row and one `tbl_seat` row per supplied
+seat number inside a single transaction, so a rejected request leaves nothing
+behind. Duplicate seat numbers (compared case-insensitively, because MySQL's
+default collation is too), an empty seat list and a non-positive `price_paise`
+are all rejected with `400`.
+
+```powershell
+# Promote the user to admin from /admin/ first - role is not writable via the API.
+$token = (Invoke-RestMethod -Method POST -Uri http://localhost:8000/api/v1/auth/login `
+    -ContentType 'application/json' `
+    -Body '{"username":"admin","password":"pass@123"}').access
+
+Invoke-RestMethod -Method POST -Uri http://localhost:8000/api/v1/shows `
+    -ContentType 'application/json' `
+    -Headers @{ Authorization = "Bearer $token" } `
+    -Body '{"name":"friday-night","seats":["A1","A2","A3"],"price_paise":25000}'
+
+Invoke-RestMethod -Uri http://localhost:8000/api/v1/shows/1 `
+    -Headers @{ Authorization = "Bearer $token" }
+```
 
 ## Docker setup
 

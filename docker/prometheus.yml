@@ -1,0 +1,13 @@
+# Prometheus scrape config for the bookmyshow Compose stack.
+# Mounted into the `prometheus` service by docker-compose.yml.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: bookmyshow-web
+    metrics_path: /metrics
+    static_configs:
+      # Compose service name and container port, not localhost.
+      - targets: ["web:8000"]

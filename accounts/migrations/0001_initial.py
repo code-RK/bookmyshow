@@ -36,7 +36,13 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'user',
                 'verbose_name_plural': 'users',
-                'db_table': 'Tbl_Users',
+                # Matches Tbl_Users.Meta.db_table. Corrected here rather than
+                # via a follow-up AlterModelTable migration: the migration is
+                # already applied locally and MySQL on Windows stores the name
+                # lowercased, so the physical table is already `tbl_users`.
+                # Leaving it as `Tbl_Users` would create the wrong table name
+                # on a case-sensitive (Linux/Docker) MySQL.
+                'db_table': 'tbl_users',
             },
             managers=[
                 ('objects', django.contrib.auth.models.UserManager()),

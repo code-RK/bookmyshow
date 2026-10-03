@@ -16,8 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from .views import LivenessView, ReadinessView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/auth/', include('accounts.urls')),
+    # Mounted at api/v1/ rather than api/v1/shows: a `shows/` prefix would
+    # need the trailing slash for the detail route, which makes APPEND_SLASH
+    # redirect POST /api/v1/shows and drop the request body. The `shows`
+    # segment therefore lives in show/urls.py.
+    path('api/v1/', include('show.urls')),
+    # No leading slash: Django strips it before matching, so '/health/live'
+    # would never match.
+    path('health/live', LivenessView.as_view(), name="live-check"),
+    path('health/ready', ReadinessView.as_view(), name="ready-check"),
+    # GET /metrics, scraped by Prometheus (see docker/prometheus.yml).
+    path("", include("django_prometheus.urls")),
 ]

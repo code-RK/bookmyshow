@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from pathlib import Path
 import os
 
@@ -31,7 +31,9 @@ SECRET_KEY = 'django-insecure-4+^h9!q2_y%b#%z*uk*h^z2l+8!*&h&tz%4v87795igz4$m4@1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# With DEBUG on, an empty list allows only localhost. `web` is the Compose
+# service name, which Prometheus uses as the Host header when scraping.
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', 'web']
 
 
 # Application definition
@@ -47,6 +49,8 @@ INSTALLED_APPS = [
     'rest_framework',
     # Local
     'accounts',
+    'show',
+    'django_prometheus'
 ]
 
 # Custom user table - see accounts/models/tbl_users.py. This must be set before
@@ -78,7 +82,47 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': LOG_DIR / f"app_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log",
+            'mode': 'a',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        # file only, not console: the per-restart file already captures every
+        # warning/traceback, and echoing it to stderr too just pollutes
+        # out.log when running under `nohup ... > out.log &` (nohup routes
+        # stderr to the same place as stdout when stderr is still a tty).
+        'api': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}
+
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -86,6 +130,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Innermost, so request.resolver_match is set when it reads the route.
+    'bookmyshow.middleware.RequestMetricsMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'bookmyshow.urls'
@@ -116,7 +163,9 @@ WSGI_APPLICATION = 'bookmyshow.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        # django-prometheus' wrapper around the MySQL backend: identical
+        # behaviour, plus query/connection/error counters on /metrics.
+        'ENGINE': 'django_prometheus.db.backends.mysql',
         'NAME': os.environ["DB_NAME"],
         'USER': os.environ["DB_USER"],
         'PASSWORD': os.environ["DB_PASSWORD"],

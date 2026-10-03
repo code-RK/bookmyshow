@@ -1,0 +1,13 @@
+# Loads every dashboard JSON in /var/lib/grafana/dashboards (mounted from
+# docker/grafana/dashboards) on startup.
+apiVersion: 1
+
+providers:
+  - name: bookmyshow
+    folder: BookMyShow
+    type: file
+    # Edits made in the UI are not written back to the JSON file; export the
+    # dashboard and replace docker/grafana/dashboards/bookmyshow.json to keep them.
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

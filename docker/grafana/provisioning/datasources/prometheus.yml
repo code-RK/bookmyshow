@@ -1,0 +1,17 @@
+# Provisioned on Grafana startup - no manual "Add data source" step needed.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    # Fixed uid: the dashboard JSON refers to the data source by this id.
+    uid: prometheus
+    access: proxy
+    # Compose service name, not localhost.
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      # Matches scrape_interval in docker/prometheus.yml, so $__rate_interval
+      # always spans enough samples.
+      timeInterval: 15s

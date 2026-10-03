@@ -13,14 +13,10 @@ class Tbl_Users(AbstractUser):
     """
 
     class Role(models.TextChoices):
-        ADMIN = 'admin', 'Admin'
-        CUSTOMER = 'customer', 'Customer'
+        ADMIN = 'admin'
+        CUSTOMER = 'customer'
 
-    role = models.CharField(
-        max_length=20,
-        choices=Role.choices,
-        default=Role.CUSTOMER,
-    )
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.CUSTOMER)
 
     class Meta:
         db_table = 'tbl_users'
