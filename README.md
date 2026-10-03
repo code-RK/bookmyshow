@@ -197,8 +197,17 @@ docker compose down -v        # stop and wipe the database volume
   3306; `web` reaches it over the Compose network as `db:3306`. Uncomment the
   `ports:` block in `docker-compose.yml` to expose it (e.g. `13306:3306`).
 - `docker/entrypoint.sh` waits until MySQL accepts connections, runs
-  `manage.py migrate --noinput`, then `exec`s gunicorn on `0.0.0.0:8000`
-  (`bookmyshow.wsgi:application`).
+  `manage.py migrate --noinput`, then `exec`s gunicorn
+  (`bookmyshow.wsgi:application`) with the settings in `gunicorn.conf.py`.
+- gunicorn runs `GUNICORN_WORKERS` processes × `GUNICORN_THREADS` threads
+  (default 4 × 8 = 32 requests at once; each thread holds one MySQL
+  connection, so keep the product well under MySQL's `max_connections`,
+  151 by default). It listens on `$PORT` (default 8000), as PaaS hosts expect.
+- `DB_SSL=false` (the Compose default) turns off TLS between `web` and `db`,
+  which share a private network; leave it on for a database reached over the
+  internet.
+- Prometheus counters from all workers are summed through
+  `PROMETHEUS_MULTIPROC_DIR` (set in the Dockerfile, emptied on every start).
 - The `db` service sets `MYSQL_ROOT_HOST: "%"`, because the app authenticates
   from the `web` container rather than from localhost. This only applies when
   the `mysql_data` volume is first created - run `docker compose down -v` if

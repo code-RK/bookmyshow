@@ -237,8 +237,8 @@
     {
       "type": "stat",
       "id": 6,
-      "title": "Conflicts",
-      "description": "409s: seats already booked, per-user limit reached, or idempotency key reused.",
+      "title": "Declined (409)",
+      "description": "Seats already taken, per-user limit reached, idempotency key reused, or contention. Idempotent replays are not counted.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -255,7 +255,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(reservation_conflicts_total[$__range]))",
+          "expr": "sum(increase(reservation_conflicts_total{reason!=\"idempotent_replay\"}[$__range]))",
           "legendFormat": "__auto",
           "refId": "A"
         }
@@ -537,8 +537,8 @@
     {
       "type": "timeseries",
       "id": 10,
-      "title": "Conflicts per minute, by reason",
-      "description": "Why reservations were rejected with 409.",
+      "title": "Declines and replays per minute, by reason",
+      "description": "Requests that booked nothing new: 409 declines by reason, plus idempotent replays of an earlier booking.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -629,6 +629,36 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "#199e70"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "idempotent_replay"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#c98500"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "contention"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#d55181"
                 }
               }
             ]
@@ -851,7 +881,7 @@
     {
       "type": "row",
       "id": 13,
-      "title": "HTTP",
+      "title": "Seat inventory",
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -864,6 +894,159 @@
     {
       "type": "timeseries",
       "id": 14,
+      "title": "Seats available, per show",
+      "description": "Counted from the database at every scrape, so it always matches GET /shows/{id}.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (show_id) (seats_available)",
+          "legendFormat": "show {{show_id}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 8,
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "min": 0,
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 15,
+      "title": "Seats confirmed, per show",
+      "description": "Seats booked by a confirmed reservation; drops when one is cancelled.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (show_id) (seats_confirmed)",
+          "legendFormat": "show {{show_id}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 8,
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "min": 0,
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "row",
+      "id": 16,
+      "title": "HTTP",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "id": 17,
       "title": "Requests per second, by route",
       "description": "All API traffic, grouped by URL route (Prometheus scrapes excluded).",
       "datasource": {
@@ -874,7 +1057,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 22
+        "y": 31
       },
       "targets": [
         {
@@ -933,7 +1116,7 @@
     },
     {
       "type": "timeseries",
-      "id": 15,
+      "id": 18,
       "title": "Responses by status class",
       "description": "2xx success, 4xx client errors (incl. 401/409), 5xx server errors.",
       "datasource": {
@@ -944,7 +1127,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 31
       },
       "targets": [
         {
@@ -1061,7 +1244,7 @@
     },
     {
       "type": "timeseries",
-      "id": 16,
+      "id": 19,
       "title": "p95 latency, by route",
       "description": "95% of requests to each route finished faster than this.",
       "datasource": {
@@ -1072,7 +1255,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 39
       },
       "targets": [
         {
@@ -1131,7 +1314,7 @@
     },
     {
       "type": "timeseries",
-      "id": 17,
+      "id": 20,
       "title": "Server error rate (5xx)",
       "description": "Share of requests that failed with a 5xx. Should stay at 0.",
       "datasource": {
@@ -1142,7 +1325,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 39
       },
       "targets": [
         {
@@ -1200,20 +1383,20 @@
     },
     {
       "type": "row",
-      "id": 18,
+      "id": 21,
       "title": "Database",
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 47
       },
       "panels": []
     },
     {
       "type": "timeseries",
-      "id": 19,
+      "id": 22,
       "title": "Database queries per second",
       "description": "SQL statements executed by Django.",
       "datasource": {
@@ -1224,7 +1407,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 39
+        "y": 48
       },
       "targets": [
         {
@@ -1282,7 +1465,7 @@
     },
     {
       "type": "timeseries",
-      "id": 20,
+      "id": 23,
       "title": "Database query latency",
       "description": "p50 = typical query, p95 = slowest 5%.",
       "datasource": {
@@ -1293,7 +1476,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 39
+        "y": 48
       },
       "targets": [
         {

@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from .metrics import metrics_view
 from .views import LivenessView, ReadinessView
 
 urlpatterns = [
@@ -30,6 +31,8 @@ urlpatterns = [
     # would never match.
     path('health/live', LivenessView.as_view(), name="live-check"),
     path('health/ready', ReadinessView.as_view(), name="ready-check"),
-    # GET /metrics, scraped by Prometheus (see docker/prometheus.yml).
-    path("", include("django_prometheus.urls")),
+    # GET /metrics, scraped by Prometheus (see docker/prometheus.yml). Our own
+    # view rather than django_prometheus.urls, so the seat gauges are included
+    # and counters from every gunicorn worker are summed.
+    path('metrics', metrics_view, name='metrics'),
 ]

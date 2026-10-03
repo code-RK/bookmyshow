@@ -171,6 +171,24 @@ DATABASES = {
         'PASSWORD': os.environ["DB_PASSWORD"],
         'HOST': os.environ["DB_HOST"],
         'PORT': os.environ["DB_PORT"],
+        # Keep each worker thread's connection open between requests instead
+        # of reconnecting every time; health checks drop a dead one first.
+        'CONN_MAX_AGE': 60,
+        'CONN_HEALTH_CHECKS': True,
+        'OPTIONS': {
+            # Django's default for MySQL, spelled out because the booking
+            # logic depends on it: a locking read sees rows committed by
+            # transactions it waited for.
+            'isolation_level': 'read committed',
+            # Give up on a row lock after 5s (MySQL default: 50s); the
+            # reserve/cancel views retry, so a stuck queue fails fast
+            # instead of holding a worker thread for 50s.
+            'init_command': 'SET SESSION innodb_lock_wait_timeout = 5',
+            # PyMySQL upgrades to TLS whenever the server offers it. Inside a
+            # private network (Docker Compose, a PaaS internal network) that
+            # only costs CPU, so it can be switched off with DB_SSL=false.
+            'ssl_disabled': os.environ.get('DB_SSL', 'true').lower() == 'false',
+        },
     }
 }
 

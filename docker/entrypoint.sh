@@ -39,6 +39,13 @@ if [ -n "${DB_HOST:-}" ]; then
     wait_for_db
 fi
 
+# Metric files left over from a previous run would be summed into the new
+# one's totals, so start from an empty directory.
+if [ -n "${PROMETHEUS_MULTIPROC_DIR:-}" ]; then
+    rm -rf "${PROMETHEUS_MULTIPROC_DIR}"
+    mkdir -p "${PROMETHEUS_MULTIPROC_DIR}"
+fi
+
 echo "Applying migrations ..."
 python manage.py migrate --noinput
 

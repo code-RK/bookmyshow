@@ -1,8 +1,10 @@
 import hashlib
 import json
+import random
 import re
+import time
 
-from django.db import transaction
+from django.db import IntegrityError, OperationalError, transaction
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -19,6 +21,38 @@ from bookmyshow.metrics import (
 )
 
 from .models import Tbl_Seat, Tbl_Show, Tbl_Reservation, Tbl_Reservation_Seat, Tbl_Idempotency_Key
+
+
+# MySQL errors after which re-running the whole transaction is safe and
+# usually succeeds: 1213 = deadlock (MySQL rolled the transaction back),
+# 1205 = lock wait timeout (innodb_lock_wait_timeout, see settings.py).
+RETRYABLE_MYSQL_ERRORS = {1213, 1205}
+MAX_TRANSACTION_ATTEMPTS = 4
+
+
+class ContentionError(Exception):
+    """Every attempt hit a deadlock or lock wait timeout."""
+
+
+def run_atomic_with_retry(fn):
+    """Run ``fn()`` in a transaction, re-running it on deadlock or lock timeout.
+
+    Each attempt is a fresh transaction, so a retry never sees half of a
+    rolled-back attempt. Raises ContentionError once every attempt has
+    failed, so the caller can answer with a clean 409 instead of a 500.
+    """
+    for attempt in range(1, MAX_TRANSACTION_ATTEMPTS + 1):
+        try:
+            with transaction.atomic():
+                return fn()
+        except OperationalError as exc:
+            if not exc.args or exc.args[0] not in RETRYABLE_MYSQL_ERRORS:
+                raise
+            if attempt == MAX_TRANSACTION_ATTEMPTS:
+                raise ContentionError from exc
+            # Random backoff so the transactions that collided do not
+            # collide again on the next attempt.
+            time.sleep(random.uniform(0, 0.02 * 2 ** attempt))
 
 
 def show_payload(show):
@@ -273,129 +307,183 @@ class ReserveSeatView(APIView):
             json.dumps(payload, sort_keys=True).encode()
         ).hexdigest()
 
-        # Every early return below happens before any write, so returning from
-        # inside the atomic block commits nothing.
-        with transaction.atomic():
-            # Lock this user's row so two concurrent requests from the same
-            # user cannot bypass the per-user limit or reuse a key.
-            user = type(request.user).objects.select_for_update().get(
-                pk=request.user.pk
+        # Fast decline, without locks or a transaction: in a hot-seat storm
+        # almost every request is for a seat that is already gone, and this
+        # keeps them from queueing on the seat's row lock. It only ever
+        # declines; whether a seat is actually free is still decided under
+        # the lock below.
+        #
+        # The key is read *after* the seats: if a seat shows as taken by this
+        # same request's earlier attempt, that booking (and its key, written
+        # in the same transaction) has committed, so the key is visible and
+        # the retry goes on to be replayed rather than declined.
+        taken = list(
+            Tbl_Seat.objects
+            .filter(show=show, seat_number__in=seats)
+            .exclude(status=Tbl_Seat.Status.AVAILABLE)
+            .values_list("seat_number", flat=True)
+        )
+        if taken and not Tbl_Idempotency_Key.objects.filter(key=idempotency_key).exists():
+            RESERVATION_CONFLICTS.labels("seats_unavailable").inc()
+            return Response(
+                {
+                    "message": "Some seats are unavailable",
+                    "unavailable_seats": taken,
+                },
+                status=status.HTTP_409_CONFLICT
             )
 
-            # The key is unique across all users, so look it up by key alone.
-            existing_key = (
-                Tbl_Idempotency_Key.objects
-                .filter(key=idempotency_key)
-                .first()
+        try:
+            response, booked = run_atomic_with_retry(
+                lambda: self._reserve_locked(request, show, seats, idempotency_key, request_hash)
             )
-            if existing_key:
-                if (
-                    existing_key.user_id != user.id
-                    or existing_key.request_hash != request_hash
-                ):
-                    RESERVATION_CONFLICTS.labels("idempotency_key_reused").inc()
-                    return Response(
-                        {"message": "This idempotency key was already used for a different request"},
-                        status=status.HTTP_409_CONFLICT
+        except ContentionError:
+            RESERVATION_CONFLICTS.labels("contention").inc()
+            return Response(
+                {"message": "The seats are under heavy contention, please retry"},
+                status=status.HTTP_409_CONFLICT
+            )
+        except IntegrityError:
+            # Another user inserted the same idempotency key at the same
+            # moment (requests from one user are serialized by the user-row
+            # lock, so this is always a different user's request).
+            if not Tbl_Idempotency_Key.objects.filter(key=idempotency_key).exists():
+                raise
+            RESERVATION_CONFLICTS.labels("idempotency_key_reused").inc()
+            return Response(
+                {"message": "This idempotency key was already used for a different request"},
+                status=status.HTTP_409_CONFLICT
+            )
+
+        # Counted after the transaction, i.e. once the booking is committed.
+        if booked:
+            RESERVATION_SUCCESS.inc()
+        return response
+
+    @staticmethod
+    def _reserve_locked(request, show, seats, idempotency_key, request_hash):
+        """The booking itself, run inside one transaction.
+
+        Returns ``(response, booked)``. Every early return happens before any
+        write, so returning from inside the transaction commits nothing.
+        Locks are always taken in the same order - the user's row, then the
+        seats sorted by seat number - so two requests cannot deadlock by
+        locking the same rows in opposite orders.
+        """
+        # Lock this user's row so two concurrent requests from the same user
+        # cannot bypass the per-user limit or reuse a key.
+        user = type(request.user).objects.select_for_update().get(pk=request.user.pk)
+
+        # The key is unique across all users, so look it up by key alone.
+        existing_key = Tbl_Idempotency_Key.objects.filter(key=idempotency_key).first()
+        if existing_key:
+            if (
+                existing_key.user_id != user.id
+                or existing_key.request_hash != request_hash
+            ):
+                RESERVATION_CONFLICTS.labels("idempotency_key_reused").inc()
+                return Response(
+                    {"message": "This idempotency key was already used for a different request"},
+                    status=status.HTTP_409_CONFLICT
+                ), False
+            RESERVATION_CONFLICTS.labels("idempotent_replay").inc()
+            return Response(
+                existing_key.response_body,
+                status=existing_key.status_code
+            ), False
+
+        existing_seat_count = Tbl_Seat.objects.filter(
+            show=show,
+            current_reservation__user=user,
+            current_reservation__status=Tbl_Reservation.Status.CONFIRMED,
+        ).count()
+
+        if existing_seat_count + len(seats) > show.per_user_limit:
+            RESERVATION_CONFLICTS.labels("user_limit_exceeded").inc()
+            return Response(
+                {
+                    "message": (
+                        f"You can book at most {show.per_user_limit} seats "
+                        f"for this show. You already have {existing_seat_count}."
                     )
-                return Response(
-                    existing_key.response_body,
-                    status=existing_key.status_code
-                )
+                },
+                status=status.HTTP_409_CONFLICT
+            ), False
 
-            existing_seat_count = Tbl_Seat.objects.filter(
-                show=show,
-                current_reservation__user=user,
-                current_reservation__status=Tbl_Reservation.Status.CONFIRMED,
-            ).count()
+        # Lock the requested seats, in seat-number order (see the docstring).
+        seat_list = list(
+            Tbl_Seat.objects
+            .select_for_update()
+            .filter(show=show, seat_number__in=seats)
+            .order_by("seat_number")
+        )
+        if len(seat_list) != len(seats):
+            return Response(
+                {"message": "One or more selected seats do not exist"},
+                status=status.HTTP_400_BAD_REQUEST
+            ), False
 
-            if existing_seat_count + len(seats) > show.per_user_limit:
-                RESERVATION_CONFLICTS.labels("user_limit_exceeded").inc()
-                return Response(
-                    {
-                        "message": (
-                            f"You can book at most {show.per_user_limit} seats "
-                            f"for this show. You already have {existing_seat_count}."
-                        )
-                    },
-                    status=status.HTTP_409_CONFLICT
-                )
+        unavailable = [
+            seat.seat_number
+            for seat in seat_list
+            if seat.status != Tbl_Seat.Status.AVAILABLE
+        ]
+        if unavailable:
+            RESERVATION_CONFLICTS.labels("seats_unavailable").inc()
+            return Response(
+                {
+                    "message": "Some seats are unavailable",
+                    "unavailable_seats": unavailable,
+                },
+                status=status.HTTP_409_CONFLICT
+            ), False
 
-            # Lock the requested seats.
-            seat_list = list(
-                Tbl_Seat.objects
-                .select_for_update()
-                .filter(show=show, seat_number__in=seats)
-            )
-            if len(seat_list) != len(seats):
-                return Response(
-                    {"message": "One or more selected seats do not exist"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+        amount_paise = show.price_paise * len(seats)
 
-            unavailable = [
-                seat.seat_number
-                for seat in seat_list
-                if seat.status != Tbl_Seat.Status.AVAILABLE
-            ]
-            if unavailable:
-                RESERVATION_CONFLICTS.labels("seats_unavailable").inc()
-                return Response(
-                    {
-                        "message": "Some seats are unavailable",
-                        "unavailable_seats": unavailable,
-                    },
-                    status=status.HTTP_409_CONFLICT
-                )
+        reservation = Tbl_Reservation.objects.create(
+            show=show,
+            user=user,
+            status=Tbl_Reservation.Status.CONFIRMED,
+            amount_paise=amount_paise
+        )
 
-            amount_paise = show.price_paise * len(seats)
+        for seat in seat_list:
+            seat.status = Tbl_Seat.Status.CONFIRMED
+            seat.current_reservation = reservation
 
-            reservation = Tbl_Reservation.objects.create(
-                show=show,
-                user=user,
-                status=Tbl_Reservation.Status.CONFIRMED,
-                amount_paise=amount_paise
-            )
+        Tbl_Seat.objects.bulk_update(
+            seat_list,
+            ["status", "current_reservation"]
+        )
 
-            for seat in seat_list:
-                seat.status = Tbl_Seat.Status.CONFIRMED
-                seat.current_reservation = reservation
+        # Permanent record of which seats this reservation covered;
+        # current_reservation is cleared again when it is cancelled.
+        Tbl_Reservation_Seat.objects.bulk_create([
+            Tbl_Reservation_Seat(reservation=reservation, seat=seat)
+            for seat in seat_list
+        ])
 
-            Tbl_Seat.objects.bulk_update(
-                seat_list,
-                ["status", "current_reservation"]
-            )
+        result = {
+            "reservation_id": reservation.id,
+            "show_id": show.id,
+            "user_id": user.id,
+            "seats": seats,
+            "amount_paise": amount_paise,
+            "status": Tbl_Reservation.Status.CONFIRMED,
+        }
 
-            # Permanent record of which seats this reservation covered;
-            # current_reservation is cleared again when it is cancelled.
-            Tbl_Reservation_Seat.objects.bulk_create([
-                Tbl_Reservation_Seat(reservation=reservation, seat=seat)
-                for seat in seat_list
-            ])
+        # Stored only on success, so a failed attempt can be retried with the
+        # same key.
+        Tbl_Idempotency_Key.objects.create(
+            key=idempotency_key,
+            user=user,
+            request_hash=request_hash,
+            reservation=reservation,
+            response_body=result,
+            status_code=status.HTTP_201_CREATED,
+        )
 
-            result = {
-                "reservation_id": reservation.id,
-                "show_id": show.id,
-                "user_id": user.id,
-                "seats": seats,
-                "amount_paise": amount_paise,
-                "status": Tbl_Reservation.Status.CONFIRMED,
-            }
-
-            # Stored only on success, so a failed attempt can be retried with
-            # the same key.
-            Tbl_Idempotency_Key.objects.create(
-                key=idempotency_key,
-                user=user,
-                request_hash=request_hash,
-                reservation=reservation,
-                response_body=result,
-                status_code=status.HTTP_201_CREATED,
-            )
-
-        # Counted after the block exits, i.e. once the booking is committed.
-        RESERVATION_SUCCESS.inc()
-        return Response(result, status=status.HTTP_201_CREATED)
+        return Response(result, status=status.HTTP_201_CREATED), True
 
 class ReservationDetailView(APIView):
     """``GET /api/v1/reservations/{reservation_id}`` -> 200, or 404.
@@ -440,73 +528,80 @@ class ReservationCancelView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, reservation_id):
-        with transaction.atomic():
-            try:
-                reservation = (
-                    Tbl_Reservation.objects
-                    .select_for_update()
-                    .get(
-                        id=reservation_id,
-                        user=request.user
-                    )
-                )
-            except Tbl_Reservation.DoesNotExist:
-                return Response(
-                    {"message": "Invalid reservation id"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-            if reservation.status == Tbl_Reservation.Status.CANCELLED:
-                return Response(
-                    {
-                        "reservation_id": reservation.id,
-                        "status": Tbl_Reservation.Status.CANCELLED,
-                        "message": "Reservation is already cancelled"
-                    },
-                    status=status.HTTP_200_OK
-                )
-
-            if reservation.status != Tbl_Reservation.Status.CONFIRMED:
-                return Response(
-                    {
-                        "message": "Only confirmed reservations can be cancelled"
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            # Lock the seats this reservation still holds. Filtering on
-            # current_reservation means a seat that has since moved to another
-            # reservation is never released by this one.
-            seat_list = list(
-                Tbl_Seat.objects
-                .select_for_update()
-                .filter(current_reservation=reservation)
+        try:
+            return run_atomic_with_retry(
+                lambda: self._cancel_locked(request, reservation_id)
             )
-
-            # Release seats.
-            for seat in seat_list:
-                seat.status = Tbl_Seat.Status.AVAILABLE
-                seat.current_reservation = None
-
-            Tbl_Seat.objects.bulk_update(
-                seat_list,
-                ["status", "current_reservation"]
-            )
-
-            # Cancel reservation.
-            reservation.status = Tbl_Reservation.Status.CANCELLED
-            reservation.cancelled_at = timezone.now()
-            reservation.save(update_fields=["status", "cancelled_at"])
-            transaction.on_commit(RESERVATION_CANCELLATIONS.inc)
-
-            result = {
-                "reservation_id": reservation.id,
-                "show_id": reservation.show_id,
-                "seats": reservation_seat_numbers(reservation),
-                "status": Tbl_Reservation.Status.CANCELLED
-            }
-
+        except ContentionError:
             return Response(
-                result,
+                {"message": "The reservation is under heavy contention, please retry"},
+                status=status.HTTP_409_CONFLICT
+            )
+
+    @staticmethod
+    def _cancel_locked(request, reservation_id):
+        """The cancellation itself, run inside one transaction."""
+        try:
+            reservation = (
+                Tbl_Reservation.objects
+                .select_for_update()
+                .get(id=reservation_id, user=request.user)
+            )
+        except Tbl_Reservation.DoesNotExist:
+            return Response(
+                {"message": "Invalid reservation id"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if reservation.status == Tbl_Reservation.Status.CANCELLED:
+            return Response(
+                {
+                    "reservation_id": reservation.id,
+                    "status": Tbl_Reservation.Status.CANCELLED,
+                    "message": "Reservation is already cancelled"
+                },
                 status=status.HTTP_200_OK
             )
+
+        if reservation.status != Tbl_Reservation.Status.CONFIRMED:
+            return Response(
+                {"message": "Only confirmed reservations can be cancelled"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Lock the seats this reservation still holds, in the same seat-number
+        # order the reserve view uses, so the two cannot deadlock. Filtering
+        # on current_reservation means a seat that has since moved to another
+        # reservation is never released by this one.
+        seat_list = list(
+            Tbl_Seat.objects
+            .select_for_update()
+            .filter(current_reservation=reservation)
+            .order_by("seat_number")
+        )
+
+        # Release seats.
+        for seat in seat_list:
+            seat.status = Tbl_Seat.Status.AVAILABLE
+            seat.current_reservation = None
+
+        Tbl_Seat.objects.bulk_update(
+            seat_list,
+            ["status", "current_reservation"]
+        )
+
+        # Cancel reservation.
+        reservation.status = Tbl_Reservation.Status.CANCELLED
+        reservation.cancelled_at = timezone.now()
+        reservation.save(update_fields=["status", "cancelled_at"])
+        # Dropped automatically if this attempt rolls back and is retried.
+        transaction.on_commit(RESERVATION_CANCELLATIONS.inc)
+
+        result = {
+            "reservation_id": reservation.id,
+            "show_id": reservation.show_id,
+            "seats": reservation_seat_numbers(reservation),
+            "status": Tbl_Reservation.Status.CANCELLED
+        }
+
+        return Response(result, status=status.HTTP_200_OK)

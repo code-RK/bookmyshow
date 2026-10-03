@@ -18,7 +18,11 @@ class ReadinessView(APIView):
 
     def get(self, request):
         try:
-            connection.ensure_connection()
+            # A real round trip: ensure_connection() returns early when a
+            # persistent connection (CONN_MAX_AGE) is already open, even if
+            # the database has since gone away.
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
 
             return Response(
                 {
