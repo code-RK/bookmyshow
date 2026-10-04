@@ -22,6 +22,9 @@ htmlcov/
 .env.*
 !.env.example
 
+# Built inside the image by collectstatic
+staticfiles/
+
 # Not needed inside the runtime image
 docs/
 .idea/

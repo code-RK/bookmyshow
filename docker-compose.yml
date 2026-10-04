@@ -7,7 +7,8 @@
 #
 # Credentials come from the .env file in this directory - the same file that
 # bookmyshow/settings.py loads through python-dotenv - so Docker and a local
-# `python manage.py runserver` share one source of truth.
+# `python manage.py runserver` share one source of truth. Every value has a
+# local-only fallback, so a fresh clone starts with no .env at all.
 
 services:
   db:
@@ -17,8 +18,8 @@ services:
     container_name: bookmyshow-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-local-dev-password}
+      MYSQL_DATABASE: ${DB_NAME:-bookmyshow}
       # The app connects from the `web` container rather than from localhost,
       # and this image only creates 'root'@'localhost' unless told otherwise -
       # without this, `web` fails with
@@ -57,15 +58,19 @@ services:
       # port; the rest is reused from .env.
       DB_HOST: db
       DB_PORT: 3306
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-bookmyshow}
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-local-dev-password}
       # Admin account created/updated on start (docker/entrypoint.sh); also
       # the login scripts/burst.py uses to create its test show.
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # Local-only fallbacks; the deployed service sets its own.
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-local-admin-password}
       # web and db talk over Compose's private network; TLS would only cost CPU.
       DB_SSL: ${DB_SSL:-false}
+      # Required because the image runs with DEBUG=false. The fallback is for
+      # local use only; set a real SECRET_KEY in .env (or the host's settings).
+      SECRET_KEY: ${SECRET_KEY:-local-docker-insecure-key}
       # JSON lines on stdout by default; LOG_FORMAT=text for a readable terminal.
       LOG_FORMAT: ${LOG_FORMAT:-json}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}

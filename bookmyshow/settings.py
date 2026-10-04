@@ -14,6 +14,8 @@ from datetime import timedelta
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,18 +24,47 @@ from dotenv import load_dotenv
 load_dotenv(BASE_DIR / ".env")
 
 
-# Quick-start development settings - unsuitable for production
+def env_bool(name, default):
+    return os.environ.get(name, str(default)).strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+# Deployment-sensitive settings come from the environment.
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
+#
+# DEBUG defaults to on for a local `manage.py runserver`; the Docker image sets
+# DEBUG=false, so containers (local Compose and the deployed service) run with
+# production behaviour - no tracebacks shown to clients.
+DEBUG = env_bool('DEBUG', True)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4+^h9!q2_y%b#%z*uk*h^z2l+8!*&h&tz%4v87795igz4$m4@1'
+# Required whenever DEBUG is off; the fallback key is only for local runs.
+SECRET_KEY = os.environ.get('SECRET_KEY', '')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is off.')
+    SECRET_KEY = 'django-insecure-local-development-only'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Comma-separated. Defaults cover local runs and `web`, the Compose service
+# name, which Prometheus uses as the Host header when scraping.
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,[::1],web').split(',')
+    if h.strip()
+]
+# On Railway: allow the generated public domain automatically, and the host
+# name Railway's health checker sends (https://docs.railway.com/guides/healthchecks).
+if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
+    ALLOWED_HOSTS.append(os.environ['RAILWAY_PUBLIC_DOMAIN'])
+if os.environ.get('RAILWAY_ENVIRONMENT_NAME'):
+    ALLOWED_HOSTS.append('healthcheck.railway.app')
 
-# With DEBUG on, an empty list allows only localhost. `web` is the Compose
-# service name, which Prometheus uses as the Host header when scraping.
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', 'web']
+# HTTPS is terminated by the platform's proxy, which forwards plain HTTP and
+# says so in X-Forwarded-Proto; trust it so Django knows the request was HTTPS.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# Admin logins over HTTPS need their origin trusted for CSRF.
+CSRF_TRUSTED_ORIGINS = [
+    f'https://{h}' for h in ALLOWED_HOSTS
+    if h not in ('localhost', '127.0.0.1', '[::1]', 'web', 'healthcheck.railway.app')
+]
 
 
 # Application definition
@@ -123,6 +154,7 @@ MIDDLEWARE = [
     'bookmyshow.middleware.RequestLogMiddleware',
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -157,19 +189,24 @@ WSGI_APPLICATION = 'bookmyshow.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 #
-# NOTE: credentials are static/hard-coded for now. Move them to environment
-# variables (or a secrets manager) before deploying anywhere real.
+# From the DB_* variables: .env for a local run, docker-compose.yml in Docker,
+# and on Railway each one references the MySQL service's own variable (see
+# README, "Deploy"). docker/entrypoint.sh waits for this same database.
+#
+# .get rather than [...]: settings are also loaded at image build time
+# (collectstatic), where no database is configured. A missing value shows up at
+# runtime instead: the entrypoint refuses to start without DB_HOST.
 
 DATABASES = {
     'default': {
         # django-prometheus' wrapper around the MySQL backend: identical
         # behaviour, plus query/connection/error counters on /metrics.
         'ENGINE': 'django_prometheus.db.backends.mysql',
-        'NAME': os.environ["DB_NAME"],
-        'USER': os.environ["DB_USER"],
-        'PASSWORD': os.environ["DB_PASSWORD"],
-        'HOST': os.environ["DB_HOST"],
-        'PORT': os.environ["DB_PORT"],
+        'NAME': os.environ.get('DB_NAME', ''),
+        'USER': os.environ.get('DB_USER', ''),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', ''),
+        'PORT': os.environ.get('DB_PORT', '3306'),
         # Keep each worker thread's connection open between requests instead
         # of reconnecting every time; health checks drop a dead one first.
         'CONN_MAX_AGE': 60,
@@ -227,6 +264,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+# `collectstatic` (run in the Dockerfile) gathers the admin's CSS/JS here, and
+# WhiteNoise serves it - Django itself only serves static files when DEBUG is on.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+}
 
 
 # Email

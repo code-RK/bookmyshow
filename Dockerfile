@@ -8,11 +8,15 @@ FROM python:3.14-slim
 # PROMETHEUS_MULTIPROC_DIR: each gunicorn worker writes its metric values here
 #                           and /metrics sums them (bookmyshow/metrics.py);
 #                           emptied on every start by docker/entrypoint.sh
+# DEBUG=false:              containers run with production behaviour (no
+#                           tracebacks in responses), so SECRET_KEY must be
+#                           provided at runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
+    PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc \
+    DEBUG=false
 
 WORKDIR /app
 
@@ -26,6 +30,10 @@ COPY . .
 # PYTHONDONTWRITEBYTECODE stops Python writing .pyc files at runtime, so the
 # project's own modules are compiled once here instead of on every start.
 RUN python -m compileall -q /app
+
+# Gather the admin's static files for WhiteNoise. Settings need a SECRET_KEY to
+# load with DEBUG off; this throwaway one exists only for this build step.
+RUN SECRET_KEY=collectstatic-only python manage.py collectstatic --noinput
 
 # Run as an unprivileged user rather than root.
 RUN useradd --create-home --uid 1000 appuser \

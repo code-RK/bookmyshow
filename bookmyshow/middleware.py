@@ -17,6 +17,15 @@ _VALID_REQUEST_ID = re.compile(r'^[A-Za-z0-9._-]{1,64}$')
 _QUIET_PREFIXES = ('/metrics', '/health/')
 
 
+def client_ip(request):
+    """The caller's address. Behind a hosting proxy REMOTE_ADDR is the proxy,
+    and the client is the first entry of X-Forwarded-For. Only for logging:
+    the header can be set by the client, so it is never trusted for access
+    decisions."""
+    forwarded = request.headers.get('X-Forwarded-For', '')
+    return forwarded.split(',')[0].strip() or request.META.get('REMOTE_ADDR')
+
+
 class RequestLogMiddleware:
     """Assigns the request id and writes one JSON line per request.
 
@@ -53,6 +62,7 @@ class RequestLogMiddleware:
                 'status': status,
                 'duration_ms': round((time.perf_counter() - start) * 1000, 1),
                 'user_id': user.pk if user is not None and user.is_authenticated else None,
+                'client_ip': client_ip(request),
             }
             entry.update(bound_fields())
             # For a rejected request, say why (DRF responses carry the body as data).

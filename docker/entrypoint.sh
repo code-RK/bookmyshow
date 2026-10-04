@@ -10,34 +10,49 @@
 set -e
 
 wait_for_db() {
-    echo "Waiting for MySQL at ${DB_HOST}:${DB_PORT} ..."
-    until python -c '
-import os
+    # Reads the connection details from Django's settings, so it waits for
+    # exactly the database the app will use (the DB_* variables). Exit code
+    # 3 means misconfigured - stop instead of waiting forever.
+    while true; do
+        python -c '
 import sys
+
+try:
+    from bookmyshow import settings
+except Exception as exc:
+    print(f"Settings failed to load: {exc}", file=sys.stderr)
+    sys.exit(3)
 
 import pymysql
 
+db = settings.DATABASES["default"]
+host, port = db["HOST"], int(db["PORT"])
+if not host:
+    print("No database configured: set DB_HOST, DB_PORT, DB_NAME, DB_USER and DB_PASSWORD.", file=sys.stderr)
+    sys.exit(3)
 try:
-    conn = pymysql.connect(
-        host=os.environ["DB_HOST"],
-        port=int(os.environ.get("DB_PORT", "3306")),
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
+    pymysql.connect(
+        host=host,
+        port=port,
+        user=db["USER"],
+        password=db["PASSWORD"],
+        ssl_disabled=db["OPTIONS"]["ssl_disabled"],
         connect_timeout=3,
-    )
-    conn.close()
+    ).close()
 except Exception as exc:
-    print(f"  ... not ready: {exc}", file=sys.stderr)
+    print(f"Waiting for MySQL at {host}:{port} ... ({exc})", file=sys.stderr)
     sys.exit(1)
-'; do
+' && break
+        status=$?
+        if [ "$status" -eq 3 ]; then
+            exit 1
+        fi
         sleep 2
     done
     echo "MySQL is ready."
 }
 
-if [ -n "${DB_HOST:-}" ]; then
-    wait_for_db
-fi
+wait_for_db
 
 # Metric files left over from a previous run would be summed into the new
 # one's totals, so start from an empty directory.

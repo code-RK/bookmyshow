@@ -186,7 +186,7 @@ Runs the Django service and a MySQL 8.0 database (Django 6.0 requires MySQL
 used by local runs, so there is one source of truth.
 
 ```powershell
-docker compose up --build     # start db + web
+docker compose up --build     # start db + web + prometheus + grafana (no .env needed)
 docker compose logs -f web    # follow application logs
 docker compose down           # stop the stack (keeps the database volume)
 docker compose down -v        # stop and wipe the database volume
@@ -234,6 +234,51 @@ $env:DB_NAME = "bookmyshow_dev"; docker compose up --build
   Because the image only installs from `requirements.txt`, a server that is
   installed locally but missing there fails with
   `exec: gunicorn: not found` and the container restart-loops with exit 127.
+
+## Deploy (Railway)
+
+The repository deploys as-is: `railway.json` tells Railway to build the
+`Dockerfile` and to treat the service as up only once `/health/ready` returns
+200 (database reachable). A failed start restarts up to 10 times.
+
+1. **Create the project**: on railway.app, *New Project → Deploy from GitHub
+   repo*, and pick this repository.
+2. **Add the database**: *+ New → Database → MySQL*.
+3. **Set the app service's variables** (*service → Variables*):
+
+   | Variable | Value |
+   | --- | --- |
+   | `DB_HOST` | `${{MySQL.MYSQLHOST}}` (the private host, `*.railway.internal`) |
+   | `DB_PORT` | `${{MySQL.MYSQLPORT}}` |
+   | `DB_NAME` | `${{MySQL.MYSQLDATABASE}}` |
+   | `DB_USER` | `${{MySQL.MYSQLUSER}}` |
+   | `DB_PASSWORD` | `${{MySQL.MYSQLPASSWORD}}` |
+   | `DB_SSL` | `false` (the private network is not exposed to the internet) |
+   | `SECRET_KEY` | output of `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
+   | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | the admin login, created on every start |
+
+   Optional: `GUNICORN_WORKERS` / `GUNICORN_THREADS` (default 4 × 8),
+   `LOG_LEVEL`.
+4. **Expose it**: *service → Settings → Networking → Generate Domain*. The
+   domain (Railway's `RAILWAY_PUBLIC_DOMAIN`) and Railway's health-check host
+   are added to `ALLOWED_HOSTS` automatically; `PORT` is picked up by
+   `gunicorn.conf.py`.
+5. **Check it**:
+
+   ```bash
+   curl https://<domain>/health/ready        # {"status":"ready","database":"ok"}
+   ADMIN_USERNAME=... ADMIN_PASSWORD=... ./burst.sh https://<domain>
+   ```
+
+On each start the container waits for MySQL, applies migrations, creates or
+updates the admin, then starts gunicorn. Logs are under *service →
+Deployments → View logs* (JSON, one line per request; see [Logs](#logs)).
+Metrics are at `https://<domain>/metrics`.
+
+Production behaviour comes from the image (`DEBUG=false`): no tracebacks in
+responses, the admin's static files served by WhiteNoise, HTTPS detected
+through `X-Forwarded-Proto`, and the container refuses to start without a
+`SECRET_KEY`.
 
 ## Logs
 
