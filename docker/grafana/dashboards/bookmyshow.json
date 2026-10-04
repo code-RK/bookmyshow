@@ -16,7 +16,24 @@
   "schemaVersion": 39,
   "version": 1,
   "templating": {
-    "list": []
+    "list": [
+      {
+        "type": "adhoc",
+        "name": "service",
+        "label": "Service",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "filters": [
+          {
+            "key": "job",
+            "operator": "=",
+            "value": "bookmyshow-web"
+          }
+        ]
+      }
+    ]
   },
   "annotations": {
     "list": []

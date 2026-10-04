@@ -37,11 +37,14 @@ import os
 import random
 import ssl
 import statistics
+import subprocess
 import sys
 import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
+from pathlib import Path
 from urllib.parse import urlsplit
 
 DEFAULT_USER_PASSWORD = "Seat-Storm-Pass-2026!"
@@ -144,6 +147,35 @@ def token_user_id(token):
     return int(json.loads(base64.urlsafe_b64decode(payload))["user_id"])
 
 
+class Tee:
+    """Copies everything printed to a UTF-8 report file as well as the console."""
+
+    def __init__(self, console, path):
+        self.console = console
+        self.file = open(path, "w", encoding="utf-8")
+
+    def write(self, text):
+        self.console.write(text)
+        self.file.write(text)
+
+    def flush(self):
+        self.console.flush()
+        self.file.flush()
+
+
+def git_commit():
+    """Short commit hash of the checkout running the script, '+dirty' if modified."""
+    try:
+        here = Path(__file__).resolve().parent
+        sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=here,
+                             capture_output=True, text=True, check=True).stdout.strip()
+        dirty = subprocess.run(["git", "status", "--porcelain"], cwd=here,
+                               capture_output=True, text=True, check=True).stdout.strip()
+        return sha + ("+dirty" if dirty else "")
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+
+
 # ------------------------------------------------------------------ results
 
 class Result:
@@ -196,7 +228,9 @@ def run_parallel(fn, jobs, concurrency, label):
     def progress():
         while not stop.wait(2):
             el = time.perf_counter() - start
-            print(f"    {label}: {done[0]}/{len(jobs)} ({done[0] / el:.0f} req/s)", flush=True)
+            # Console only: the report keeps the results, not the ticker.
+            print(f"    {label}: {done[0]}/{len(jobs)} ({done[0] / el:.0f} req/s)",
+                  file=sys.__stdout__, flush=True)
 
     t = threading.Thread(target=progress, daemon=True)
     t.start()
@@ -241,7 +275,14 @@ def main():
                     help="password for the test users (default: $BURST_USER_PASSWORD or a built-in one)")
     ap.add_argument("--api-prefix", default="/api/v1")
     ap.add_argument("--timeout", type=float, default=120, help="per-request timeout in seconds")
+    ap.add_argument("--report", metavar="FILE",
+                    help="also write the output to FILE (UTF-8), plus FILE's name with .metrics.txt: "
+                         "the service's /metrics at the end of the run")
     args = ap.parse_args()
+
+    if args.report:
+        Path(args.report).parent.mkdir(parents=True, exist_ok=True)
+        sys.stdout = Tee(sys.stdout, args.report)
 
     if not args.admin_user or not args.admin_password:
         sys.exit("Admin credentials needed to create the show: set ADMIN_USERNAME and ADMIN_PASSWORD "
@@ -258,7 +299,10 @@ def main():
     rng = random.Random()
 
     # ---------------------------------------------------------------- setup
-    print(f"BookMyShow burst against {args.base_url}  (run {run_id})\n")
+    print(f"BookMyShow burst against {args.base_url}  (run {run_id})")
+    print(f"  started {datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S} UTC, script at commit {git_commit()}")
+    print(f"  {args.requests} requests, {args.concurrency} in flight, {args.seats} seats, "
+          f"{args.hot_seats} hot seats, {args.users} users\n")
     print("[1/5] setup")
     status, _, body, _ = client.request("GET", "/health/ready", root=True)
     if status != 200:
@@ -462,6 +506,10 @@ def main():
     check("another user's cancel is refused (404)", all(r.status == 404 for r in intr), f"{len(intr)} attempts")
 
     status, _, text, _ = client.request("GET", "/metrics", root=True, text=True)
+    if status == 200 and args.report:
+        metrics_path = Path(args.report).with_suffix(".metrics.txt")
+        metrics_path.write_text(text, encoding="utf-8")
+        print(f"  (/metrics at the end of the run saved to {metrics_path})")
     if status == 200:
         gauges = {}
         for line in text.splitlines():
