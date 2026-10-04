@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
-from datetime import timedelta, datetime
+from datetime import timedelta
 from pathlib import Path
 import os
 
@@ -82,46 +82,45 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
-LOG_DIR = BASE_DIR / "logs"
-LOG_DIR.mkdir(exist_ok=True)
+# Logging
+#
+# Everything goes to stdout - `docker compose logs`, and any hosting platform's
+# log viewer, pick it up from there. Each request is one JSON line carrying its
+# request id (see bookmyshow/log.py and RequestLogMiddleware).
+#
+#   LOG_FORMAT=json (default) | text   text is easier to read in a local terminal
+#   LOG_LEVEL=INFO (default)           level for the app's own `api.*` loggers
+LOG_FORMAT = os.environ.get('LOG_FORMAT', 'json')
+LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
+        'json': {'()': 'bookmyshow.log.JsonFormatter'},
+        'text': {'()': 'bookmyshow.log.TextFormatter'},
     },
     'handlers': {
-        'file': {
-            'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            'filename': LOG_DIR / f"app_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log",
-            'mode': 'a',
-            'formatter': 'verbose',
+        'stdout': {
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://sys.stdout',
+            'formatter': LOG_FORMAT,
         },
     },
+    'root': {'handlers': ['stdout'], 'level': 'WARNING'},
     'loggers': {
-        # file only, not console: the per-restart file already captures every
-        # warning/traceback, and echoing it to stderr too just pollutes
-        # out.log when running under `nohup ... > out.log &` (nohup routes
-        # stderr to the same place as stdout when stderr is still a tty).
-        'api': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'django': {
-            'handlers': ['file'],
-            'level': 'WARNING',
-            'propagate': False,
-        },
+        'api': {'handlers': ['stdout'], 'level': LOG_LEVEL, 'propagate': False},
+        'django': {'handlers': ['stdout'], 'level': 'WARNING', 'propagate': False},
+        # Django logs every 4xx response here as a warning, which would double
+        # each 409 of a burst; the request line already records them. 5xx
+        # responses (with their traceback) are still logged at ERROR.
+        'django.request': {'handlers': ['stdout'], 'level': 'ERROR', 'propagate': False},
     },
 }
 
 MIDDLEWARE = [
+    # Outermost: assigns the request id and logs every request once.
+    'bookmyshow.middleware.RequestLogMiddleware',
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

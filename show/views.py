@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import random
 import re
 import time
@@ -12,6 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.permissions import IsAdminRole
+from bookmyshow.log import bind
 from bookmyshow.metrics import (
     RESERVATION_ATTEMPTS,
     RESERVATION_CANCELLATIONS,
@@ -21,6 +23,8 @@ from bookmyshow.metrics import (
 )
 
 from .models import Tbl_Seat, Tbl_Show, Tbl_Reservation, Tbl_Reservation_Seat, Tbl_Idempotency_Key
+
+logger = logging.getLogger('api.reservations')
 
 
 # MySQL errors after which re-running the whole transaction is safe and
@@ -48,6 +52,11 @@ def run_atomic_with_retry(fn):
         except OperationalError as exc:
             if not exc.args or exc.args[0] not in RETRYABLE_MYSQL_ERRORS:
                 raise
+            logger.warning(
+                'transaction rolled back, retrying' if attempt < MAX_TRANSACTION_ATTEMPTS
+                else 'transaction rolled back, giving up',
+                extra={'mysql_error': exc.args[0], 'attempt': attempt},
+            )
             if attempt == MAX_TRANSACTION_ATTEMPTS:
                 raise ContentionError from exc
             # Random backoff so the transactions that collided do not
@@ -63,6 +72,7 @@ def decline(reason, message, **extra):
     without parsing the message.
     """
     RESERVATION_CONFLICTS.labels(reason).inc()
+    bind(outcome="declined", reason=reason)
     return Response(
         {"reason": reason, "message": message, **extra},
         status=status.HTTP_409_CONFLICT,
@@ -199,6 +209,7 @@ class ShowCreateView(APIView):
 
         # bulk_create does not set primary keys on MySQL, so the seats are read
         # back rather than taken from the objects above.
+        bind(outcome="show_created", show_id=show.id, seat_count=len(seats))
         return Response(show_payload(show), status=status.HTTP_201_CREATED)
 
 
@@ -242,6 +253,7 @@ class ReserveSeatView(APIView):
     @RESERVATION_LATENCY.time()
     def post(self, request, show_id):
         RESERVATION_ATTEMPTS.inc()
+        bind(show_id=show_id)
 
         if not isinstance(request.data, dict):
             return Response(
@@ -361,6 +373,7 @@ class ReserveSeatView(APIView):
         # Counted after the transaction, i.e. once the booking is committed.
         if booked:
             RESERVATION_SUCCESS.inc()
+            bind(outcome="confirmed", reservation_id=response.data["reservation_id"], seats=seats)
         return response
 
     @staticmethod
@@ -391,6 +404,7 @@ class ReserveSeatView(APIView):
             # Same key, same request: the original response again, flagged so
             # the client can tell a replay from a new booking.
             RESERVATION_CONFLICTS.labels("idempotent_replay").inc()
+            bind(outcome="replayed", reservation_id=existing_key.reservation_id)
             return Response(
                 existing_key.response_body,
                 status=existing_key.status_code,
@@ -523,6 +537,7 @@ class ReservationCancelView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, reservation_id):
+        bind(reservation_id=reservation_id)
         try:
             return run_atomic_with_retry(
                 lambda: self._cancel_locked(request, reservation_id)
@@ -549,6 +564,7 @@ class ReservationCancelView(APIView):
             )
 
         if reservation.status == Tbl_Reservation.Status.CANCELLED:
+            bind(outcome="already_cancelled")
             return Response(
                 {
                     "reservation_id": reservation.id,
@@ -591,6 +607,7 @@ class ReservationCancelView(APIView):
         reservation.save(update_fields=["status", "cancelled_at"])
         # Dropped automatically if this attempt rolls back and is retried.
         transaction.on_commit(RESERVATION_CANCELLATIONS.inc)
+        bind(outcome="cancelled", show_id=reservation.show_id, released=[s.seat_number for s in seat_list])
 
         result = {
             "reservation_id": reservation.id,

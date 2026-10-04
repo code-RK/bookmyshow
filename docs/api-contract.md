@@ -144,6 +144,11 @@ http_requests_total{method="POST",path="/api/v1/shows/1/reserve",status="200"} 4
 # TYPE reservation_conflicts_total counter
 reservation_conflicts_total 3
 
+<!-- request id -->
+Every response carries an X-Request-ID header: the caller's own X-Request-ID
+(letters, digits, . _ -, up to 64 chars) if sent, otherwise a generated one.
+The same id is on every log line for that request.
+
 <!-- status codes -->
 201 → new reservation
 200 → idempotent replay

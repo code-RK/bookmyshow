@@ -235,6 +235,45 @@ $env:DB_NAME = "bookmyshow_dev"; docker compose up --build
   installed locally but missing there fails with
   `exec: gunicorn: not found` and the container restart-loops with exit 127.
 
+## Logs
+
+Logs go to stdout as one JSON object per line: `docker compose logs -f web`
+locally, or the hosting platform's log viewer. Every request is logged exactly
+once, when its response is ready:
+
+```json
+{"ts": "2026-10-04T09:23:38.871Z", "level": "INFO", "logger": "api.request",
+ "msg": "POST /api/v1/shows/35/reserve 201", "request_id": "e5f9db1a5c6a4b01a3279ef22e268e09",
+ "method": "POST", "path": "/api/v1/shows/35/reserve", "route": "/api/v1/shows/<int:show_id>/reserve",
+ "status": 201, "duration_ms": 28.6, "user_id": 26510, "show_id": 35,
+ "outcome": "confirmed", "reservation_id": 23119, "seats": ["A1", "A2"]}
+```
+
+- **Request id**: the caller's `X-Request-ID` header if it sent one
+  (letters, digits, `.`, `_`, `-`; up to 64 characters), otherwise a new one.
+  It is returned in the `X-Request-ID` response header and appears on every
+  line written during that request, including the traceback of a 500.
+- **outcome** says what happened. On reserve it is `confirmed`, `replayed` or
+  `declined` (with `reason`, the same names as the 409 body and the metrics).
+  On cancel it is `cancelled` (with the `released` seats) or
+  `already_cancelled`. Creating a show logs `show_created`. Any 4xx/5xx also
+  carries `error`, the message from the response.
+- `/metrics` and `/health/*` are logged only when they fail, since they are
+  polled constantly.
+- A deadlock or lock timeout that is retried logs a WARNING from
+  `api.reservations` with the MySQL error code and attempt number.
+
+Settings: `LOG_LEVEL` (default `INFO`) and `LOG_FORMAT` (`json`, the default,
+or `text` for a readable local terminal).
+
+Useful filters:
+
+```bash
+docker compose logs web --no-log-prefix | grep '"status": 5'           # server errors
+docker compose logs web --no-log-prefix | grep '"reason": "seats_unavailable"'
+docker compose logs web --no-log-prefix | grep '"request_id": "<id>"'   # one request
+```
+
 ## Burst test (on-sale stampede)
 
 One command fires an on-sale stampede at a running service, prints the outcome

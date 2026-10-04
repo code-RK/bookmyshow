@@ -29,8 +29,23 @@ timeout = 60
 graceful_timeout = 30
 keepalive = 5
 
-accesslog = "-"
-errorlog = "-"
+# No access log: RequestLogMiddleware already writes one JSON line per request
+# (with its request id). gunicorn's own messages - startup, worker boots,
+# timeouts - use the same JSON format, on stdout.
+accesslog = None
+logconfig_dict = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"json": {"()": "bookmyshow.log.JsonFormatter"}},
+    "handlers": {
+        "stdout": {"class": "logging.StreamHandler", "formatter": "json", "stream": "ext://sys.stdout"},
+    },
+    "root": {"level": "INFO", "handlers": ["stdout"]},
+    "loggers": {
+        "gunicorn.error": {"level": "INFO", "handlers": ["stdout"], "propagate": False, "qualname": "gunicorn.error"},
+        "gunicorn.access": {"level": "INFO", "handlers": [], "propagate": False, "qualname": "gunicorn.access"},
+    },
+}
 
 # Import Django and the project once in the master process; forked workers
 # share the loaded modules instead of each importing everything again. This
