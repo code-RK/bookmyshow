@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+local_settings.py
+staticfiles/
+media/
+
+# Environment / secrets
+.env
+.env.*
+*.env
+# ...but keep the committed template so new checkouts know what to provide
+!.env.example
+
+# Tooling / editors
+.idea/
+.vscode/
+.pytest_cache/
+.coverage
+htmlcov/
+mypy_cache/
+.ruff_cache/

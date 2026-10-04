@@ -1,0 +1,123 @@
+# Docker Compose stack for the bookmyshow Django service.
+#
+#   docker compose up --build     # start db + web + prometheus + grafana
+#   docker compose logs -f web    # follow application logs
+#   docker compose down           # stop (keeps the mysql_data volume)
+#   docker compose down -v        # stop and wipe the database
+#
+# Credentials come from the .env file in this directory - the same file that
+# bookmyshow/settings.py loads through python-dotenv - so Docker and a local
+# `python manage.py runserver` share one source of truth. Every value has a
+# local-only fallback, so a fresh clone starts with no .env at all.
+
+services:
+  db:
+    # Django 6.0 requires MySQL >= 8.0.11 (see django/db/backends/mysql/features.py),
+    # so 8.0 LTS is used here. `mysql:8.0` would work too.
+    image: mysql:8.0
+    container_name: bookmyshow-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-local-dev-password}
+      MYSQL_DATABASE: ${DB_NAME:-bookmyshow}
+      # The app connects from the `web` container rather than from localhost,
+      # and this image only creates 'root'@'localhost' unless told otherwise -
+      # without this, `web` fails with
+      # "Access denied for user 'root'@'172.x.x.x'".
+      # Only takes effect when the mysql_data volume is first initialised, so
+      # run `docker compose down -v` if you add it after a first boot.
+      MYSQL_ROOT_HOST: "%"
+    # The host machine already runs MySQL on 3306, so the port is deliberately
+    # not published. Uncomment the block below to reach the DB from the host.
+    # ports:
+    #   - "13306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping --host=127.0.0.1 --user=root --password=\"$$MYSQL_ROOT_PASSWORD\" --silent",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bookmyshow-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # DB_HOST/DB_PORT are forced to the Compose service name and internal
+      # port; the rest is reused from .env.
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-bookmyshow}
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-local-dev-password}
+      # Admin account created/updated on start (docker/entrypoint.sh); also
+      # the login scripts/burst.py uses to create its test show.
+      # Local-only fallbacks; the deployed service sets its own.
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-local-admin-password}
+      # web and db talk over Compose's private network; TLS would only cost CPU.
+      DB_SSL: ${DB_SSL:-false}
+      # Required because the image runs with DEBUG=false. The fallback is for
+      # local use only; set a real SECRET_KEY in .env (or the host's settings).
+      SECRET_KEY: ${SECRET_KEY:-local-docker-insecure-key}
+      # JSON lines on stdout by default; LOG_FORMAT=text for a readable terminal.
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Concurrency = workers x threads (see gunicorn.conf.py).
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-4}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-8}
+    ports:
+      - "8000:8000"
+    # For live reload during development, uncomment this bind mount and run
+    # `docker compose up` - runserver's autoreloader then picks up edits.
+    # volumes:
+    #   - .:/app
+
+  prometheus:
+    # Scrapes web:8000/metrics every 15s; UI at http://localhost:9090.
+    image: prom/prometheus:latest
+    container_name: bookmyshow-prometheus
+    restart: unless-stopped
+    depends_on:
+      - web
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    # Dashboards at http://localhost:3000 - the BookMyShow dashboard and the
+    # Prometheus data source are provisioned from docker/grafana on startup.
+    image: grafana/grafana:latest
+    container_name: bookmyshow-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      # Open straight onto the BookMyShow dashboard after login.
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/bookmyshow.json
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+
+volumes:
+  mysql_data:
+  prometheus_data:
+  grafana_data:

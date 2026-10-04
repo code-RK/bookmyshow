@@ -1,0 +1,24 @@
+# Prometheus scrape config for the bookmyshow Compose stack.
+# Mounted into the `prometheus` service by docker-compose.yml.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: bookmyshow-web
+    metrics_path: /metrics
+    static_configs:
+      # Compose service name and container port, not localhost.
+      - targets: ["web:8000"]
+
+  # The deployed service on Railway, so the local Grafana can watch it too
+  # (pick job=bookmyshow-live in the dashboard's filter). Scraped every 5s to
+  # follow a burst closely. Shows as "down" in Prometheus when the service is
+  # unreachable - harmless.
+  - job_name: bookmyshow-live
+    scheme: https
+    metrics_path: /metrics
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["bookmyshow-production-3db6.up.railway.app"]
