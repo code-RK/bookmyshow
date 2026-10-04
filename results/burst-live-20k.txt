@@ -1,0 +1,58 @@
+BookMyShow burst against https://bookmyshow-production-3db6.up.railway.app  (run 4b1e66c8)
+  started 2026-10-04 11:08:09 UTC, script at commit 14d69d6+dirty
+  20000 requests, 200 in flight, 500 seats, 5 hot seats, 200 users
+
+[1/5] setup
+  show 2: 500 seats, per_user_limit 4, hot seats A001, A002, A003, A004, A005
+  203 users logged in (46.8s)
+
+[2/5] stampede: 20000 requests, 200 in flight
+  outcome distribution:
+    confirmed (201)                          450    2.3%
+    idempotent replay (201)                   73    0.4%
+    declined: seats_unavailable (409)      19424   97.1%
+    declined: user_limit_exceeded (409)       50    0.3%
+    total                                  19997  in 55.4s = 361 req/s
+    latency ms: p50 495  p95 759  p99 1701  max 24564
+
+[3/5] idempotency: same key, same body vs. different seats
+    first request: confirmed (201)
+    same body x10: {'idempotent replay (201)': 10}
+    different seats x10: {'declined: idempotency_key_reused (409)': 10}
+
+[4/5] release: hot-seat winners cancel, freed seats are stormed again
+    owner cancels: {200: 10}   other user's cancels: {404: 5}
+  re-storm of 5 freed seats:
+    confirmed (201)                            5    1.0%
+    declined: seats_unavailable (409)        493   98.6%
+    declined: user_limit_exceeded (409)        2    0.4%
+    total                                    500  in 20.0s = 25 req/s
+    latency ms: p50 502  p95 1262  p99 17228  max 19327
+
+[5/5] reconciliation
+  GET /shows/2: total 500, available 7, held 0, confirmed 493
+  [PASS] zero 5xx and transport errors across every phase  (20533 requests)
+  [PASS] invariant: available + held + confirmed == total_seats  (500 vs 500)
+  [PASS] no seat confirmed to two reservations
+  [PASS] seats confirmed by the API == seats in our live 201 responses  (493 vs 493)
+  [PASS] hot seat A001: exactly one winner in the stampede  (1 winners)
+  [PASS] hot seat A002: exactly one winner in the stampede  (1 winners)
+  [PASS] hot seat A003: exactly one winner in the stampede  (1 winners)
+  [PASS] hot seat A004: exactly one winner in the stampede  (1 winners)
+  [PASS] hot seat A005: exactly one winner in the stampede  (1 winners)
+  [PASS] freed seat A004: exactly one winner in the re-storm  (1 winners)
+  [PASS] freed seat A003: exactly one winner in the re-storm  (1 winners)
+  [PASS] freed seat A001: exactly one winner in the re-storm  (1 winners)
+  [PASS] freed seat A005: exactly one winner in the re-storm  (1 winners)
+  [PASS] freed seat A002: exactly one winner in the re-storm  (1 winners)
+  [PASS] no user holds more than 4 seats  (max 4)
+  [PASS] one user firing 10 parallel requests got exactly 4  (4 confirmed)
+  [PASS] each idempotency key produced at most one reservation
+  [PASS] same key + same body: every resend replayed the original
+  [PASS] same key + different seats: all 409 idempotency_key_reused
+  [PASS] a spoofed user_id in the body never changes who books  (4/4 booked as the token's user)
+  [PASS] another user's cancel is refused (404)  (5 attempts)
+  (/metrics at the end of the run saved to results\burst-live-20k.metrics.txt)
+  [PASS] /metrics seat gauges match GET /shows  ({'available': 7, 'held': 0, 'confirmed': 493, 'total': 500})
+
+ALL CHECKS PASSED

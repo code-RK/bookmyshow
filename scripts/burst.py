@@ -169,7 +169,8 @@ def git_commit():
         here = Path(__file__).resolve().parent
         sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=here,
                              capture_output=True, text=True, check=True).stdout.strip()
-        dirty = subprocess.run(["git", "status", "--porcelain"], cwd=here,
+        # Tracked files only: --report itself creates an untracked results file.
+        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=here,
                                capture_output=True, text=True, check=True).stdout.strip()
         return sha + ("+dirty" if dirty else "")
     except (OSError, subprocess.CalledProcessError):

@@ -1,0 +1,537 @@
+# HELP django_http_requests_latency_including_middlewares_seconds Histogram of requests processing time (including middleware processing time).
+# TYPE django_http_requests_latency_including_middlewares_seconds histogram
+django_http_requests_latency_including_middlewares_seconds_sum 1821.1785070491023
+django_http_requests_latency_including_middlewares_seconds_bucket{le="0.01"} 237.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="0.025"} 5510.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="0.05"} 9747.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="0.075"} 13200.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="0.1"} 19673.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="0.25"} 20487.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="0.5"} 20561.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="0.75"} 20571.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="1.0"} 20614.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="2.5"} 21121.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="5.0"} 21121.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="7.5"} 21121.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="10.0"} 21121.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="25.0"} 21121.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="50.0"} 21121.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="75.0"} 21121.0
+django_http_requests_latency_including_middlewares_seconds_bucket{le="+Inf"} 21121.0
+django_http_requests_latency_including_middlewares_seconds_count 21121.0
+# HELP django_http_requests_body_total_bytes Histogram of requests by body size.
+# TYPE django_http_requests_body_total_bytes histogram
+django_http_requests_body_total_bytes_sum 451974.0
+django_http_requests_body_total_bytes_bucket{le="0.0"} 99.0
+django_http_requests_body_total_bytes_bucket{le="1.0"} 99.0
+django_http_requests_body_total_bytes_bucket{le="2.0"} 99.0
+django_http_requests_body_total_bytes_bucket{le="4.0"} 99.0
+django_http_requests_body_total_bytes_bucket{le="8.0"} 99.0
+django_http_requests_body_total_bytes_bucket{le="16.0"} 99.0
+django_http_requests_body_total_bytes_bucket{le="32.0"} 20613.0
+django_http_requests_body_total_bytes_bucket{le="64.0"} 20618.0
+django_http_requests_body_total_bytes_bucket{le="128.0"} 21121.0
+django_http_requests_body_total_bytes_bucket{le="256.0"} 21121.0
+django_http_requests_body_total_bytes_bucket{le="512.0"} 21121.0
+django_http_requests_body_total_bytes_bucket{le="1024.0"} 21121.0
+django_http_requests_body_total_bytes_bucket{le="2048.0"} 21121.0
+django_http_requests_body_total_bytes_bucket{le="4096.0"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="8192.0"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="16384.0"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="32768.0"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="65536.0"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="131072.0"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="262144.0"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="524288.0"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="1.048576e+06"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="2.097152e+06"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="4.194304e+06"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="8.388608e+06"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="1.6777216e+07"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="3.3554432e+07"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="6.7108864e+07"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="1.34217728e+08"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="2.68435456e+08"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="5.36870912e+08"} 21122.0
+django_http_requests_body_total_bytes_bucket{le="+Inf"} 21122.0
+django_http_requests_body_total_bytes_count 21122.0
+# HELP django_http_responses_body_total_bytes Histogram of responses by body size.
+# TYPE django_http_responses_body_total_bytes histogram
+django_http_responses_body_total_bytes_sum 4.281266e+06
+django_http_responses_body_total_bytes_bucket{le="0.0"} 0.0
+django_http_responses_body_total_bytes_bucket{le="1.0"} 0.0
+django_http_responses_body_total_bytes_bucket{le="2.0"} 0.0
+django_http_responses_body_total_bytes_bucket{le="4.0"} 0.0
+django_http_responses_body_total_bytes_bucket{le="8.0"} 0.0
+django_http_responses_body_total_bytes_bucket{le="16.0"} 0.0
+django_http_responses_body_total_bytes_bucket{le="32.0"} 0.0
+django_http_responses_body_total_bytes_bucket{le="64.0"} 306.0
+django_http_responses_body_total_bytes_bucket{le="128.0"} 20834.0
+django_http_responses_body_total_bytes_bucket{le="256.0"} 20834.0
+django_http_responses_body_total_bytes_bucket{le="512.0"} 21038.0
+django_http_responses_body_total_bytes_bucket{le="1024.0"} 21038.0
+django_http_responses_body_total_bytes_bucket{le="2048.0"} 21038.0
+django_http_responses_body_total_bytes_bucket{le="4096.0"} 21038.0
+django_http_responses_body_total_bytes_bucket{le="8192.0"} 21039.0
+django_http_responses_body_total_bytes_bucket{le="16384.0"} 21040.0
+django_http_responses_body_total_bytes_bucket{le="32768.0"} 21097.0
+django_http_responses_body_total_bytes_bucket{le="65536.0"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="131072.0"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="262144.0"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="524288.0"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="1.048576e+06"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="2.097152e+06"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="4.194304e+06"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="8.388608e+06"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="1.6777216e+07"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="3.3554432e+07"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="6.7108864e+07"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="1.34217728e+08"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="2.68435456e+08"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="5.36870912e+08"} 21121.0
+django_http_responses_body_total_bytes_bucket{le="+Inf"} 21121.0
+django_http_responses_body_total_bytes_count 21121.0
+# HELP reservation_latency_seconds Time spent processing reservation requests
+# TYPE reservation_latency_seconds histogram
+reservation_latency_seconds_sum 789.5461693094112
+reservation_latency_seconds_bucket{le="0.005"} 223.0
+reservation_latency_seconds_bucket{le="0.01"} 2652.0
+reservation_latency_seconds_bucket{le="0.025"} 12810.0
+reservation_latency_seconds_bucket{le="0.05"} 13723.0
+reservation_latency_seconds_bucket{le="0.075"} 18795.0
+reservation_latency_seconds_bucket{le="0.1"} 20033.0
+reservation_latency_seconds_bucket{le="0.25"} 20400.0
+reservation_latency_seconds_bucket{le="0.5"} 20453.0
+reservation_latency_seconds_bucket{le="0.75"} 20455.0
+reservation_latency_seconds_bucket{le="1.0"} 20462.0
+reservation_latency_seconds_bucket{le="2.5"} 20518.0
+reservation_latency_seconds_bucket{le="5.0"} 20518.0
+reservation_latency_seconds_bucket{le="7.5"} 20518.0
+reservation_latency_seconds_bucket{le="10.0"} 20518.0
+reservation_latency_seconds_bucket{le="+Inf"} 20518.0
+reservation_latency_seconds_count 20518.0
+# HELP django_db_query_duration_seconds Histogram of query duration by database and vendor.
+# TYPE django_db_query_duration_seconds histogram
+django_db_query_duration_seconds_sum{alias="default",vendor="mysql"} 810.776195764076
+django_db_query_duration_seconds_bucket{alias="default",le="0.01",vendor="mysql"} 73642.0
+django_db_query_duration_seconds_bucket{alias="default",le="0.025",vendor="mysql"} 78800.0
+django_db_query_duration_seconds_bucket{alias="default",le="0.05",vendor="mysql"} 80402.0
+django_db_query_duration_seconds_bucket{alias="default",le="0.075",vendor="mysql"} 86430.0
+django_db_query_duration_seconds_bucket{alias="default",le="0.1",vendor="mysql"} 86501.0
+django_db_query_duration_seconds_bucket{alias="default",le="0.25",vendor="mysql"} 86568.0
+django_db_query_duration_seconds_bucket{alias="default",le="0.5",vendor="mysql"} 86570.0
+django_db_query_duration_seconds_bucket{alias="default",le="0.75",vendor="mysql"} 86580.0
+django_db_query_duration_seconds_bucket{alias="default",le="1.0",vendor="mysql"} 86597.0
+django_db_query_duration_seconds_bucket{alias="default",le="2.5",vendor="mysql"} 86599.0
+django_db_query_duration_seconds_bucket{alias="default",le="5.0",vendor="mysql"} 86599.0
+django_db_query_duration_seconds_bucket{alias="default",le="7.5",vendor="mysql"} 86599.0
+django_db_query_duration_seconds_bucket{alias="default",le="10.0",vendor="mysql"} 86599.0
+django_db_query_duration_seconds_bucket{alias="default",le="25.0",vendor="mysql"} 86599.0
+django_db_query_duration_seconds_bucket{alias="default",le="50.0",vendor="mysql"} 86599.0
+django_db_query_duration_seconds_bucket{alias="default",le="75.0",vendor="mysql"} 86599.0
+django_db_query_duration_seconds_bucket{alias="default",le="+Inf",vendor="mysql"} 86599.0
+django_db_query_duration_seconds_count{alias="default",vendor="mysql"} 86599.0
+# HELP django_http_requests_latency_seconds_by_view_method Histogram of request processing time labelled by view.
+# TYPE django_http_requests_latency_seconds_by_view_method histogram
+django_http_requests_latency_seconds_by_view_method_sum{method="GET",view="metrics"} 4.161582105327398
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.01",method="GET",view="metrics"} 44.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.025",method="GET",view="metrics"} 50.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.05",method="GET",view="metrics"} 63.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.075",method="GET",view="metrics"} 65.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.1",method="GET",view="metrics"} 68.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.25",method="GET",view="metrics"} 74.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.5",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.75",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="1.0",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="2.5",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="5.0",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="7.5",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="10.0",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="25.0",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="50.0",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="75.0",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="+Inf",method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_count{method="GET",view="metrics"} 80.0
+django_http_requests_latency_seconds_by_view_method_sum{method="POST",view="auth-login"} 407.0650447369553
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.01",method="POST",view="auth-login"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.025",method="POST",view="auth-login"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.05",method="POST",view="auth-login"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.075",method="POST",view="auth-login"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.1",method="POST",view="auth-login"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.25",method="POST",view="auth-login"} 5.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.5",method="POST",view="auth-login"} 10.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.75",method="POST",view="auth-login"} 13.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="1.0",method="POST",view="auth-login"} 45.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="2.5",method="POST",view="auth-login"} 354.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="5.0",method="POST",view="auth-login"} 354.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="7.5",method="POST",view="auth-login"} 354.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="10.0",method="POST",view="auth-login"} 354.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="25.0",method="POST",view="auth-login"} 354.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="50.0",method="POST",view="auth-login"} 354.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="75.0",method="POST",view="auth-login"} 354.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="+Inf",method="POST",view="auth-login"} 354.0
+django_http_requests_latency_seconds_by_view_method_count{method="POST",view="auth-login"} 354.0
+django_http_requests_latency_seconds_by_view_method_sum{method="POST",view="auth-register"} 181.28253262629732
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.01",method="POST",view="auth-register"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.025",method="POST",view="auth-register"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.05",method="POST",view="auth-register"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.075",method="POST",view="auth-register"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.1",method="POST",view="auth-register"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.25",method="POST",view="auth-register"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.5",method="POST",view="auth-register"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.75",method="POST",view="auth-register"} 4.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="1.0",method="POST",view="auth-register"} 9.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="2.5",method="POST",view="auth-register"} 150.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="5.0",method="POST",view="auth-register"} 150.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="7.5",method="POST",view="auth-register"} 150.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="10.0",method="POST",view="auth-register"} 150.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="25.0",method="POST",view="auth-register"} 150.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="50.0",method="POST",view="auth-register"} 150.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="75.0",method="POST",view="auth-register"} 150.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="+Inf",method="POST",view="auth-register"} 150.0
+django_http_requests_latency_seconds_by_view_method_count{method="POST",view="auth-register"} 150.0
+django_http_requests_latency_seconds_by_view_method_sum{method="POST",view="reserve-seat"} 1215.6885545663536
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.01",method="POST",view="reserve-seat"} 207.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.025",method="POST",view="reserve-seat"} 5631.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.05",method="POST",view="reserve-seat"} 9775.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.075",method="POST",view="reserve-seat"} 13306.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.1",method="POST",view="reserve-seat"} 19611.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.25",method="POST",view="reserve-seat"} 20389.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.5",method="POST",view="reserve-seat"} 20451.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.75",method="POST",view="reserve-seat"} 20455.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="1.0",method="POST",view="reserve-seat"} 20461.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="2.5",method="POST",view="reserve-seat"} 20518.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="5.0",method="POST",view="reserve-seat"} 20518.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="7.5",method="POST",view="reserve-seat"} 20518.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="10.0",method="POST",view="reserve-seat"} 20518.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="25.0",method="POST",view="reserve-seat"} 20518.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="50.0",method="POST",view="reserve-seat"} 20518.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="75.0",method="POST",view="reserve-seat"} 20518.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="+Inf",method="POST",view="reserve-seat"} 20518.0
+django_http_requests_latency_seconds_by_view_method_count{method="POST",view="reserve-seat"} 20518.0
+django_http_requests_latency_seconds_by_view_method_sum{method="POST",view="reservation-cancel"} 0.2891390388831496
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.01",method="POST",view="reservation-cancel"} 3.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.025",method="POST",view="reservation-cancel"} 11.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.05",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.075",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.1",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.25",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.5",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.75",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="1.0",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="2.5",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="5.0",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="7.5",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="10.0",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="25.0",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="50.0",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="75.0",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="+Inf",method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_count{method="POST",view="reservation-cancel"} 15.0
+django_http_requests_latency_seconds_by_view_method_sum{method="GET",view="show-detail"} 0.03194174310192466
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.01",method="GET",view="show-detail"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.025",method="GET",view="show-detail"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.05",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.075",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.1",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.25",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.5",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.75",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="1.0",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="2.5",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="5.0",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="7.5",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="10.0",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="25.0",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="50.0",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="75.0",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="+Inf",method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_count{method="GET",view="show-detail"} 1.0
+django_http_requests_latency_seconds_by_view_method_sum{method="POST",view="show-create"} 0.19649242283776402
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.01",method="POST",view="show-create"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.025",method="POST",view="show-create"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.05",method="POST",view="show-create"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.075",method="POST",view="show-create"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.1",method="POST",view="show-create"} 0.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.25",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.5",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.75",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="1.0",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="2.5",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="5.0",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="7.5",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="10.0",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="25.0",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="50.0",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="75.0",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="+Inf",method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_count{method="POST",view="show-create"} 1.0
+django_http_requests_latency_seconds_by_view_method_sum{method="GET",view="ready-check"} 0.08881750097498298
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.01",method="GET",view="ready-check"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.025",method="GET",view="ready-check"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.05",method="GET",view="ready-check"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.075",method="GET",view="ready-check"} 1.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.1",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.25",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.5",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="0.75",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="1.0",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="2.5",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="5.0",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="7.5",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="10.0",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="25.0",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="50.0",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="75.0",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_bucket{le="+Inf",method="GET",view="ready-check"} 2.0
+django_http_requests_latency_seconds_by_view_method_count{method="GET",view="ready-check"} 2.0
+# HELP http_request_duration_seconds HTTP request latency in seconds
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_sum{method="GET",path="/metrics"} 4.167062541469932
+http_request_duration_seconds_bucket{le="0.005",method="GET",path="/metrics"} 0.0
+http_request_duration_seconds_bucket{le="0.01",method="GET",path="/metrics"} 44.0
+http_request_duration_seconds_bucket{le="0.025",method="GET",path="/metrics"} 50.0
+http_request_duration_seconds_bucket{le="0.05",method="GET",path="/metrics"} 63.0
+http_request_duration_seconds_bucket{le="0.075",method="GET",path="/metrics"} 65.0
+http_request_duration_seconds_bucket{le="0.1",method="GET",path="/metrics"} 68.0
+http_request_duration_seconds_bucket{le="0.25",method="GET",path="/metrics"} 74.0
+http_request_duration_seconds_bucket{le="0.5",method="GET",path="/metrics"} 80.0
+http_request_duration_seconds_bucket{le="0.75",method="GET",path="/metrics"} 80.0
+http_request_duration_seconds_bucket{le="1.0",method="GET",path="/metrics"} 80.0
+http_request_duration_seconds_bucket{le="2.5",method="GET",path="/metrics"} 80.0
+http_request_duration_seconds_bucket{le="5.0",method="GET",path="/metrics"} 80.0
+http_request_duration_seconds_bucket{le="7.5",method="GET",path="/metrics"} 80.0
+http_request_duration_seconds_bucket{le="10.0",method="GET",path="/metrics"} 80.0
+http_request_duration_seconds_bucket{le="+Inf",method="GET",path="/metrics"} 80.0
+http_request_duration_seconds_count{method="GET",path="/metrics"} 80.0
+http_request_duration_seconds_sum{method="POST",path="/api/v1/auth/login"} 407.1503376797773
+http_request_duration_seconds_bucket{le="0.005",method="POST",path="/api/v1/auth/login"} 0.0
+http_request_duration_seconds_bucket{le="0.01",method="POST",path="/api/v1/auth/login"} 0.0
+http_request_duration_seconds_bucket{le="0.025",method="POST",path="/api/v1/auth/login"} 0.0
+http_request_duration_seconds_bucket{le="0.05",method="POST",path="/api/v1/auth/login"} 0.0
+http_request_duration_seconds_bucket{le="0.075",method="POST",path="/api/v1/auth/login"} 0.0
+http_request_duration_seconds_bucket{le="0.1",method="POST",path="/api/v1/auth/login"} 0.0
+http_request_duration_seconds_bucket{le="0.25",method="POST",path="/api/v1/auth/login"} 5.0
+http_request_duration_seconds_bucket{le="0.5",method="POST",path="/api/v1/auth/login"} 10.0
+http_request_duration_seconds_bucket{le="0.75",method="POST",path="/api/v1/auth/login"} 13.0
+http_request_duration_seconds_bucket{le="1.0",method="POST",path="/api/v1/auth/login"} 45.0
+http_request_duration_seconds_bucket{le="2.5",method="POST",path="/api/v1/auth/login"} 354.0
+http_request_duration_seconds_bucket{le="5.0",method="POST",path="/api/v1/auth/login"} 354.0
+http_request_duration_seconds_bucket{le="7.5",method="POST",path="/api/v1/auth/login"} 354.0
+http_request_duration_seconds_bucket{le="10.0",method="POST",path="/api/v1/auth/login"} 354.0
+http_request_duration_seconds_bucket{le="+Inf",method="POST",path="/api/v1/auth/login"} 354.0
+http_request_duration_seconds_count{method="POST",path="/api/v1/auth/login"} 354.0
+http_request_duration_seconds_sum{method="POST",path="/api/v1/auth/register"} 181.39565120497718
+http_request_duration_seconds_bucket{le="0.005",method="POST",path="/api/v1/auth/register"} 0.0
+http_request_duration_seconds_bucket{le="0.01",method="POST",path="/api/v1/auth/register"} 0.0
+http_request_duration_seconds_bucket{le="0.025",method="POST",path="/api/v1/auth/register"} 0.0
+http_request_duration_seconds_bucket{le="0.05",method="POST",path="/api/v1/auth/register"} 0.0
+http_request_duration_seconds_bucket{le="0.075",method="POST",path="/api/v1/auth/register"} 0.0
+http_request_duration_seconds_bucket{le="0.1",method="POST",path="/api/v1/auth/register"} 0.0
+http_request_duration_seconds_bucket{le="0.25",method="POST",path="/api/v1/auth/register"} 0.0
+http_request_duration_seconds_bucket{le="0.5",method="POST",path="/api/v1/auth/register"} 1.0
+http_request_duration_seconds_bucket{le="0.75",method="POST",path="/api/v1/auth/register"} 4.0
+http_request_duration_seconds_bucket{le="1.0",method="POST",path="/api/v1/auth/register"} 9.0
+http_request_duration_seconds_bucket{le="2.5",method="POST",path="/api/v1/auth/register"} 150.0
+http_request_duration_seconds_bucket{le="5.0",method="POST",path="/api/v1/auth/register"} 150.0
+http_request_duration_seconds_bucket{le="7.5",method="POST",path="/api/v1/auth/register"} 150.0
+http_request_duration_seconds_bucket{le="10.0",method="POST",path="/api/v1/auth/register"} 150.0
+http_request_duration_seconds_bucket{le="+Inf",method="POST",path="/api/v1/auth/register"} 150.0
+http_request_duration_seconds_count{method="POST",path="/api/v1/auth/register"} 150.0
+http_request_duration_seconds_sum{method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 1218.2609983496368
+http_request_duration_seconds_bucket{le="0.005",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 34.0
+http_request_duration_seconds_bucket{le="0.01",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 205.0
+http_request_duration_seconds_bucket{le="0.025",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 5588.0
+http_request_duration_seconds_bucket{le="0.05",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 9754.0
+http_request_duration_seconds_bucket{le="0.075",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 13272.0
+http_request_duration_seconds_bucket{le="0.1",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 19605.0
+http_request_duration_seconds_bucket{le="0.25",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 20389.0
+http_request_duration_seconds_bucket{le="0.5",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 20451.0
+http_request_duration_seconds_bucket{le="0.75",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 20455.0
+http_request_duration_seconds_bucket{le="1.0",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 20461.0
+http_request_duration_seconds_bucket{le="2.5",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 20518.0
+http_request_duration_seconds_bucket{le="5.0",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 20518.0
+http_request_duration_seconds_bucket{le="7.5",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 20518.0
+http_request_duration_seconds_bucket{le="10.0",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 20518.0
+http_request_duration_seconds_bucket{le="+Inf",method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 20518.0
+http_request_duration_seconds_count{method="POST",path="/api/v1/shows/<int:show_id>/reserve"} 20518.0
+http_request_duration_seconds_sum{method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 0.2902665650472045
+http_request_duration_seconds_bucket{le="0.005",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 1.0
+http_request_duration_seconds_bucket{le="0.01",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 3.0
+http_request_duration_seconds_bucket{le="0.025",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 11.0
+http_request_duration_seconds_bucket{le="0.05",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="0.075",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="0.1",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="0.25",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="0.5",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="0.75",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="1.0",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="2.5",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="5.0",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="7.5",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="10.0",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_bucket{le="+Inf",method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_count{method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel"} 15.0
+http_request_duration_seconds_sum{method="GET",path="/api/v1/shows/<int:show_id>"} 0.03198962192982435
+http_request_duration_seconds_bucket{le="0.005",method="GET",path="/api/v1/shows/<int:show_id>"} 0.0
+http_request_duration_seconds_bucket{le="0.01",method="GET",path="/api/v1/shows/<int:show_id>"} 0.0
+http_request_duration_seconds_bucket{le="0.025",method="GET",path="/api/v1/shows/<int:show_id>"} 0.0
+http_request_duration_seconds_bucket{le="0.05",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="0.075",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="0.1",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="0.25",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="0.5",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="0.75",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="1.0",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="2.5",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="5.0",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="7.5",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="10.0",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_bucket{le="+Inf",method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_count{method="GET",path="/api/v1/shows/<int:show_id>"} 1.0
+http_request_duration_seconds_sum{method="POST",path="/api/v1/shows"} 0.19663157127797604
+http_request_duration_seconds_bucket{le="0.005",method="POST",path="/api/v1/shows"} 0.0
+http_request_duration_seconds_bucket{le="0.01",method="POST",path="/api/v1/shows"} 0.0
+http_request_duration_seconds_bucket{le="0.025",method="POST",path="/api/v1/shows"} 0.0
+http_request_duration_seconds_bucket{le="0.05",method="POST",path="/api/v1/shows"} 0.0
+http_request_duration_seconds_bucket{le="0.075",method="POST",path="/api/v1/shows"} 0.0
+http_request_duration_seconds_bucket{le="0.1",method="POST",path="/api/v1/shows"} 0.0
+http_request_duration_seconds_bucket{le="0.25",method="POST",path="/api/v1/shows"} 1.0
+http_request_duration_seconds_bucket{le="0.5",method="POST",path="/api/v1/shows"} 1.0
+http_request_duration_seconds_bucket{le="0.75",method="POST",path="/api/v1/shows"} 1.0
+http_request_duration_seconds_bucket{le="1.0",method="POST",path="/api/v1/shows"} 1.0
+http_request_duration_seconds_bucket{le="2.5",method="POST",path="/api/v1/shows"} 1.0
+http_request_duration_seconds_bucket{le="5.0",method="POST",path="/api/v1/shows"} 1.0
+http_request_duration_seconds_bucket{le="7.5",method="POST",path="/api/v1/shows"} 1.0
+http_request_duration_seconds_bucket{le="10.0",method="POST",path="/api/v1/shows"} 1.0
+http_request_duration_seconds_bucket{le="+Inf",method="POST",path="/api/v1/shows"} 1.0
+http_request_duration_seconds_count{method="POST",path="/api/v1/shows"} 1.0
+http_request_duration_seconds_sum{method="GET",path="/health/ready"} 0.08910034690052271
+http_request_duration_seconds_bucket{le="0.005",method="GET",path="/health/ready"} 1.0
+http_request_duration_seconds_bucket{le="0.01",method="GET",path="/health/ready"} 1.0
+http_request_duration_seconds_bucket{le="0.025",method="GET",path="/health/ready"} 1.0
+http_request_duration_seconds_bucket{le="0.05",method="GET",path="/health/ready"} 1.0
+http_request_duration_seconds_bucket{le="0.075",method="GET",path="/health/ready"} 1.0
+http_request_duration_seconds_bucket{le="0.1",method="GET",path="/health/ready"} 2.0
+http_request_duration_seconds_bucket{le="0.25",method="GET",path="/health/ready"} 2.0
+http_request_duration_seconds_bucket{le="0.5",method="GET",path="/health/ready"} 2.0
+http_request_duration_seconds_bucket{le="0.75",method="GET",path="/health/ready"} 2.0
+http_request_duration_seconds_bucket{le="1.0",method="GET",path="/health/ready"} 2.0
+http_request_duration_seconds_bucket{le="2.5",method="GET",path="/health/ready"} 2.0
+http_request_duration_seconds_bucket{le="5.0",method="GET",path="/health/ready"} 2.0
+http_request_duration_seconds_bucket{le="7.5",method="GET",path="/health/ready"} 2.0
+http_request_duration_seconds_bucket{le="10.0",method="GET",path="/health/ready"} 2.0
+http_request_duration_seconds_bucket{le="+Inf",method="GET",path="/health/ready"} 2.0
+http_request_duration_seconds_count{method="GET",path="/health/ready"} 2.0
+# HELP django_http_requests_before_middlewares_total Total count of requests before middlewares run.
+# TYPE django_http_requests_before_middlewares_total counter
+django_http_requests_before_middlewares_total 21122.0
+# HELP django_http_responses_before_middlewares_total Total count of responses before middlewares run.
+# TYPE django_http_responses_before_middlewares_total counter
+django_http_responses_before_middlewares_total 21121.0
+# HELP django_http_requests_unknown_latency_including_middlewares_total Count of requests for which the latency was unknown (when computing django_http_requests_latency_including_middlewares_seconds).
+# TYPE django_http_requests_unknown_latency_including_middlewares_total counter
+django_http_requests_unknown_latency_including_middlewares_total 0.0
+# HELP django_http_requests_unknown_latency_total Count of requests for which the latency was unknown.
+# TYPE django_http_requests_unknown_latency_total counter
+django_http_requests_unknown_latency_total 0.0
+# HELP django_http_ajax_requests_total Count of AJAX requests.
+# TYPE django_http_ajax_requests_total counter
+django_http_ajax_requests_total 0.0
+# HELP django_http_responses_streaming_total Count of streaming responses.
+# TYPE django_http_responses_streaming_total counter
+django_http_responses_streaming_total 0.0
+# HELP reservation_attempts_total Total number of reservation attempts
+# TYPE reservation_attempts_total counter
+reservation_attempts_total 20518.0
+# HELP reservation_success_total Total successful reservations (idempotent replays not counted)
+# TYPE reservation_success_total counter
+reservation_success_total 456.0
+# HELP reservation_cancellations_total Total cancelled reservations
+# TYPE reservation_cancellations_total counter
+reservation_cancellations_total 5.0
+# HELP reservation_conflicts_total Reservation requests that booked nothing new, by reason (409 declines, plus idempotent replays of an earlier booking)
+# TYPE reservation_conflicts_total counter
+reservation_conflicts_total{reason="seats_unavailable"} 19917.0
+reservation_conflicts_total{reason="user_limit_exceeded"} 52.0
+reservation_conflicts_total{reason="idempotency_key_reused"} 10.0
+reservation_conflicts_total{reason="idempotent_replay"} 83.0
+reservation_conflicts_total{reason="contention"} 0.0
+# HELP django_http_requests_total_by_method_total Count of requests by method.
+# TYPE django_http_requests_total_by_method_total counter
+django_http_requests_total_by_method_total{method="GET"} 84.0
+django_http_requests_total_by_method_total{method="POST"} 21038.0
+# HELP django_http_requests_total_by_transport_total Count of requests by transport.
+# TYPE django_http_requests_total_by_transport_total counter
+django_http_requests_total_by_transport_total{transport="https"} 21122.0
+# HELP django_http_requests_total_by_view_transport_method_total Count of requests by view, transport, method.
+# TYPE django_http_requests_total_by_view_transport_method_total counter
+django_http_requests_total_by_view_transport_method_total{method="GET",transport="https",view="metrics"} 81.0
+django_http_requests_total_by_view_transport_method_total{method="POST",transport="https",view="show-create"} 1.0
+django_http_requests_total_by_view_transport_method_total{method="POST",transport="https",view="auth-login"} 354.0
+django_http_requests_total_by_view_transport_method_total{method="POST",transport="https",view="auth-register"} 150.0
+django_http_requests_total_by_view_transport_method_total{method="POST",transport="https",view="reserve-seat"} 20518.0
+django_http_requests_total_by_view_transport_method_total{method="POST",transport="https",view="reservation-cancel"} 15.0
+django_http_requests_total_by_view_transport_method_total{method="GET",transport="https",view="show-detail"} 1.0
+django_http_requests_total_by_view_transport_method_total{method="GET",transport="https",view="ready-check"} 2.0
+# HELP django_db_new_connections_total Counter of created connections by database and by vendor.
+# TYPE django_db_new_connections_total counter
+django_db_new_connections_total{alias="default",vendor="mysql"} 91.0
+# HELP django_db_execute_total Counter of executed statements by database and by vendor, including bulk executions.
+# TYPE django_db_execute_total counter
+django_db_execute_total{alias="default",vendor="mysql"} 86599.0
+# HELP django_http_responses_total_by_status_total Count of responses by status.
+# TYPE django_http_responses_total_by_status_total counter
+django_http_responses_total_by_status_total{status="200"} 297.0
+django_http_responses_total_by_status_total{status="201"} 690.0
+django_http_responses_total_by_status_total{status="401"} 150.0
+django_http_responses_total_by_status_total{status="409"} 19979.0
+django_http_responses_total_by_status_total{status="404"} 5.0
+# HELP django_http_responses_total_by_status_view_method_total Count of responses by status, view, method.
+# TYPE django_http_responses_total_by_status_view_method_total counter
+django_http_responses_total_by_status_view_method_total{method="GET",status="200",view="metrics"} 80.0
+django_http_responses_total_by_status_view_method_total{method="POST",status="201",view="show-create"} 1.0
+django_http_responses_total_by_status_view_method_total{method="POST",status="200",view="auth-login"} 204.0
+django_http_responses_total_by_status_view_method_total{method="POST",status="401",view="auth-login"} 150.0
+django_http_responses_total_by_status_view_method_total{method="POST",status="201",view="auth-register"} 150.0
+django_http_responses_total_by_status_view_method_total{method="POST",status="201",view="reserve-seat"} 539.0
+django_http_responses_total_by_status_view_method_total{method="POST",status="409",view="reserve-seat"} 19979.0
+django_http_responses_total_by_status_view_method_total{method="POST",status="404",view="reservation-cancel"} 5.0
+django_http_responses_total_by_status_view_method_total{method="POST",status="200",view="reservation-cancel"} 10.0
+django_http_responses_total_by_status_view_method_total{method="GET",status="200",view="show-detail"} 1.0
+django_http_responses_total_by_status_view_method_total{method="GET",status="200",view="ready-check"} 2.0
+# HELP django_http_responses_total_by_charset_total Count of responses by charset.
+# TYPE django_http_responses_total_by_charset_total counter
+django_http_responses_total_by_charset_total{charset="utf-8"} 21121.0
+# HELP http_requests_total Total number of HTTP requests
+# TYPE http_requests_total counter
+http_requests_total{method="GET",path="/metrics",status="200"} 80.0
+http_requests_total{method="POST",path="/api/v1/shows",status="201"} 1.0
+http_requests_total{method="POST",path="/api/v1/auth/login",status="200"} 204.0
+http_requests_total{method="POST",path="/api/v1/auth/login",status="401"} 150.0
+http_requests_total{method="POST",path="/api/v1/auth/register",status="201"} 150.0
+http_requests_total{method="POST",path="/api/v1/shows/<int:show_id>/reserve",status="201"} 539.0
+http_requests_total{method="POST",path="/api/v1/shows/<int:show_id>/reserve",status="409"} 19979.0
+http_requests_total{method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel",status="404"} 5.0
+http_requests_total{method="POST",path="/api/v1/reservations/<int:reservation_id>/cancel",status="200"} 10.0
+http_requests_total{method="GET",path="/api/v1/shows/<int:show_id>",status="200"} 1.0
+http_requests_total{method="GET",path="/health/ready",status="200"} 2.0
+# HELP django_http_responses_total_by_templatename_total Count of responses by template name.
+# TYPE django_http_responses_total_by_templatename_total counter
+django_http_responses_total_by_templatename_total{templatename="None"} 21041.0
+# HELP seats_available Seats currently available, per show
+# TYPE seats_available gauge
+seats_available{show_id="1"} 11.0
+seats_available{show_id="2"} 7.0
+# HELP seats_held Seats currently held, per show
+# TYPE seats_held gauge
+seats_held{show_id="1"} 0.0
+seats_held{show_id="2"} 0.0
+# HELP seats_confirmed Seats currently confirmed, per show
+# TYPE seats_confirmed gauge
+seats_confirmed{show_id="1"} 189.0
+seats_confirmed{show_id="2"} 493.0
+# HELP seats_total Seats per show
+# TYPE seats_total gauge
+seats_total{show_id="1"} 200.0
+seats_total{show_id="2"} 500.0
