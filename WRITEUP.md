@@ -186,24 +186,15 @@ Server-side, all 20,518 reservations completed within 2.5 s, and 99.7% within
 Railway's edge proxy or in connection setup, before reaching the app.
 
 ## 7. AI usage
-
-<!-- TODO (Rahul): write this section yourself, in your own words - the spec
-asks for an honest account of what you directed vs. what you decided, and the
-interviewers will ask you to extend this code live. Some prompts:
-
-- Which tool(s) you used (e.g. Claude Code in VS Code) and for which parts.
-- What you wrote or designed yourself before using AI (e.g. the data model,
-  docs/api-contract.md, the first views and serializers, the JWT auth).
-- Decisions you made or overrode, for example: moving logic out of
-  serializers into views; keeping all routes under /api/v1; configuring the
-  database through separate DB_* variables instead of DATABASE_URL; keeping
-  one log line per request instead of sampling declines.
-- What AI produced that you reviewed and accepted (e.g. the locking/retry
-  structure, idempotency flow, burst script, metrics/logging, deployment
-  setup) - and what you verified yourself (the burst runs, the live deploy,
-  reading the code).
-- Anything AI got wrong that you or testing caught.
--->
+- Used Claude Code and Cline with free AI models to vibe code the project in VS code.
+- First made the DB structure, and API endpoints required with basic understanding
+- Next made the boiler plate django project, models creation and docker creation and setup
+- Then we made basic authentication with simple jwt
+- Next we created the actual endpoints and unit tested
+- Then added prometheus to create the log metric
+- Then we made the endpoints to survive the load testing, where we made changes to actual endpoints for locking the transaction in stampede like situation and also ran on gunicorn with combination of workers and threads, with 4 workers & 8 threads gave the best results also created burst script here
+- For simplicity we moved the already return code by AI from serializer.py to views.py as it is more handy to send custom request and for time being.
+- Tested on local setup and then deployed on railway.app for hosting live
 
 ## 8. What I would do next
 
