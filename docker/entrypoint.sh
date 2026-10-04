@@ -49,4 +49,9 @@ fi
 echo "Applying migrations ..."
 python manage.py migrate --noinput
 
+# Admin login for creating shows (the API cannot create admins); optional.
+if [ -n "${ADMIN_USERNAME:-}" ] && [ -n "${ADMIN_PASSWORD:-}" ]; then
+    python manage.py ensure_admin
+fi
+
 exec "$@"

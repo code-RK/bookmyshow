@@ -85,10 +85,15 @@ Response: 201
 }
 - user_id always comes from the token; any user field in the body is ignored.
 - All-or-nothing: if any requested seat is taken, nothing is booked (409).
-- Same key + same request -> the original response again (nothing new is booked).
+- Same key + same request -> the original response again (nothing new is booked),
+  with the header "Idempotent-Replayed: true".
 - Same key + different seats/show (or another user's key) -> 409.
-- 400 malformed body or missing key, 404 unknown show,
-  409 seat taken / per_user_limit exceeded / key reused.
+- 400 malformed body or missing key, 404 unknown show, 409 decline:
+  {
+      "reason": "seats_unavailable",      (or user_limit_exceeded,
+      "message": "...",                    idempotency_key_reused, contention)
+      "unavailable_seats": ["A1"]         (seats_unavailable only)
+  }
 
 GET /api/v1/reservations/{reservation_id}
 Authorization: Bearer <JWT>   (owner only; anyone else gets 404)

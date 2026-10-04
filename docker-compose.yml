@@ -60,6 +60,10 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      # Admin account created/updated on start (docker/entrypoint.sh); also
+      # the login scripts/burst.py uses to create its test show.
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       # web and db talk over Compose's private network; TLS would only cost CPU.
       DB_SSL: ${DB_SSL:-false}
       # Concurrency = workers x threads (see gunicorn.conf.py).

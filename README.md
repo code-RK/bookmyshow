@@ -235,6 +235,57 @@ $env:DB_NAME = "bookmyshow_dev"; docker compose up --build
   installed locally but missing there fails with
   `exec: gunicorn: not found` and the container restart-loops with exit 127.
 
+## Burst test (on-sale stampede)
+
+One command fires an on-sale stampede at a running service, prints the outcome
+distribution, and checks the results against the API and `/metrics`:
+
+```bash
+ADMIN_USERNAME=admin ADMIN_PASSWORD=... ./burst.sh http://localhost:8000
+ADMIN_USERNAME=admin ADMIN_PASSWORD=... ./burst.sh https://<live-url> --requests 20000 --concurrency 300
+```
+
+```powershell
+# Windows / PowerShell
+$env:ADMIN_USERNAME = "admin"; $env:ADMIN_PASSWORD = "..."
+python scripts/burst.py http://localhost:8000
+```
+
+It needs only Python 3.9+ (standard library) and the admin login that
+`docker/entrypoint.sh` creates from `ADMIN_USERNAME` / `ADMIN_PASSWORD`. Each run
+creates its own show (default 500 seats), so runs never interfere. Phases:
+
+1. **setup**: log in or register the test users (default 200). Logins hash
+   a password on purpose, so they happen before the clock starts; the first run
+   against a new deployment also registers them and takes longer.
+2. **stampede** (default 20,000 requests, 200 in flight), all shuffled
+   together:
+   - a quarter of the requests storm 5 hot seats;
+   - the rest are general traffic for 1-2 seats;
+   - 10% are retries that resend an earlier request with the same idempotency
+     key;
+   - one user fires 10 parallel requests at a limit-4 show;
+   - a user claims someone else's `user_id` in the body.
+3. **idempotency**: a confirmed key resent with the same body (must replay)
+   and with different seats (must be 409).
+4. **release**: hot-seat winners cancel (while another user tries to cancel
+   the same reservations), then each freed seat is stormed again.
+5. **reconciliation**: zero 5xx, exactly one winner per contested seat, no
+   seat in two live reservations, the API's confirmed seats equal the seats in
+   the 201 responses, no user over the limit, one reservation per idempotency
+   key, `available + held + confirmed == total_seats`, and the `/metrics` seat
+   gauges equal `GET /shows/{id}`.
+
+The script exits with status 1 if any check fails. `./burst.sh --help` lists
+the knobs (`--requests`, `--concurrency`, `--seats`, `--hot-seats`,
+`--hot-share`, `--retry-share`, `--users`).
+
+Declines come back as `409 {"reason": ..., "message": ...}`, with the same
+reason names as the `reservation_conflicts_total` metric: `seats_unavailable`,
+`user_limit_exceeded`, `idempotency_key_reused`, `contention`. An idempotent
+replay is the original `201` response plus an `Idempotent-Replayed: true`
+header.
+
 ## Notes
 
 - **Credentials.** `DB_*` values are read from `.env` (git-ignored) through

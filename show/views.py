@@ -55,6 +55,20 @@ def run_atomic_with_retry(fn):
             time.sleep(random.uniform(0, 0.02 * 2 ** attempt))
 
 
+def decline(reason, message, **extra):
+    """A 409 decline: counts it under ``reason`` and says why in the body.
+
+    ``reason`` is the same label as the ``reservation_conflicts_total``
+    metric, so a client (or the burst script) can tell declines apart
+    without parsing the message.
+    """
+    RESERVATION_CONFLICTS.labels(reason).inc()
+    return Response(
+        {"reason": reason, "message": message, **extra},
+        status=status.HTTP_409_CONFLICT,
+    )
+
+
 def show_payload(show):
     """The show with every seat's status and the per-status counts.
 
@@ -294,10 +308,9 @@ class ReserveSeatView(APIView):
         # A clean decline like the per-user check below, not a 400: the
         # request is well-formed, it just asks for more than the limit allows.
         if len(seats) > show.per_user_limit:
-            RESERVATION_CONFLICTS.labels("user_limit_exceeded").inc()
-            return Response(
-                {"message": f"You can book at most {show.per_user_limit} seats for this show"},
-                status=status.HTTP_409_CONFLICT
+            return decline(
+                "user_limit_exceeded",
+                f"You can book at most {show.per_user_limit} seats for this show",
             )
 
         # Deterministic hash of the request, to detect a key reused for a
@@ -324,13 +337,8 @@ class ReserveSeatView(APIView):
             .values_list("seat_number", flat=True)
         )
         if taken and not Tbl_Idempotency_Key.objects.filter(key=idempotency_key).exists():
-            RESERVATION_CONFLICTS.labels("seats_unavailable").inc()
-            return Response(
-                {
-                    "message": "Some seats are unavailable",
-                    "unavailable_seats": taken,
-                },
-                status=status.HTTP_409_CONFLICT
+            return decline(
+                "seats_unavailable", "Some seats are unavailable", unavailable_seats=taken,
             )
 
         try:
@@ -338,21 +346,16 @@ class ReserveSeatView(APIView):
                 lambda: self._reserve_locked(request, show, seats, idempotency_key, request_hash)
             )
         except ContentionError:
-            RESERVATION_CONFLICTS.labels("contention").inc()
-            return Response(
-                {"message": "The seats are under heavy contention, please retry"},
-                status=status.HTTP_409_CONFLICT
-            )
+            return decline("contention", "The seats are under heavy contention, please retry")
         except IntegrityError:
             # Another user inserted the same idempotency key at the same
             # moment (requests from one user are serialized by the user-row
             # lock, so this is always a different user's request).
             if not Tbl_Idempotency_Key.objects.filter(key=idempotency_key).exists():
                 raise
-            RESERVATION_CONFLICTS.labels("idempotency_key_reused").inc()
-            return Response(
-                {"message": "This idempotency key was already used for a different request"},
-                status=status.HTTP_409_CONFLICT
+            return decline(
+                "idempotency_key_reused",
+                "This idempotency key was already used for a different request",
             )
 
         # Counted after the transaction, i.e. once the booking is committed.
@@ -381,15 +384,17 @@ class ReserveSeatView(APIView):
                 existing_key.user_id != user.id
                 or existing_key.request_hash != request_hash
             ):
-                RESERVATION_CONFLICTS.labels("idempotency_key_reused").inc()
-                return Response(
-                    {"message": "This idempotency key was already used for a different request"},
-                    status=status.HTTP_409_CONFLICT
+                return decline(
+                    "idempotency_key_reused",
+                    "This idempotency key was already used for a different request",
                 ), False
+            # Same key, same request: the original response again, flagged so
+            # the client can tell a replay from a new booking.
             RESERVATION_CONFLICTS.labels("idempotent_replay").inc()
             return Response(
                 existing_key.response_body,
-                status=existing_key.status_code
+                status=existing_key.status_code,
+                headers={"Idempotent-Replayed": "true"},
             ), False
 
         existing_seat_count = Tbl_Seat.objects.filter(
@@ -399,15 +404,10 @@ class ReserveSeatView(APIView):
         ).count()
 
         if existing_seat_count + len(seats) > show.per_user_limit:
-            RESERVATION_CONFLICTS.labels("user_limit_exceeded").inc()
-            return Response(
-                {
-                    "message": (
-                        f"You can book at most {show.per_user_limit} seats "
-                        f"for this show. You already have {existing_seat_count}."
-                    )
-                },
-                status=status.HTTP_409_CONFLICT
+            return decline(
+                "user_limit_exceeded",
+                f"You can book at most {show.per_user_limit} seats "
+                f"for this show. You already have {existing_seat_count}.",
             ), False
 
         # Lock the requested seats, in seat-number order (see the docstring).
@@ -429,13 +429,8 @@ class ReserveSeatView(APIView):
             if seat.status != Tbl_Seat.Status.AVAILABLE
         ]
         if unavailable:
-            RESERVATION_CONFLICTS.labels("seats_unavailable").inc()
-            return Response(
-                {
-                    "message": "Some seats are unavailable",
-                    "unavailable_seats": unavailable,
-                },
-                status=status.HTTP_409_CONFLICT
+            return decline(
+                "seats_unavailable", "Some seats are unavailable", unavailable_seats=unavailable,
             ), False
 
         amount_paise = show.price_paise * len(seats)
@@ -534,7 +529,7 @@ class ReservationCancelView(APIView):
             )
         except ContentionError:
             return Response(
-                {"message": "The reservation is under heavy contention, please retry"},
+                {"reason": "contention", "message": "The reservation is under heavy contention, please retry"},
                 status=status.HTTP_409_CONFLICT
             )
 
